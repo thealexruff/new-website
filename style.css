@@ -12,29 +12,51 @@
   --dim-outside: 0.55;
 }
 
+html {
+  /* Real scrolling (not intercepted) lets iOS Safari minimise its chrome for
+     the edge-to-edge look. No scroll-snap: every visual lives in the fixed
+     .stage, so the scroll offset has no visual effect — only which role is
+     active (set by the observer at each segment's centre). Free scroll is
+     therefore both robust and smooth (Apple-style continuous transitions). */
+  scroll-behavior: smooth;
+}
 html, body {
-  height: 100%;
-  overflow: hidden;          /* prevent bounce-scroll */
-  overscroll-behavior: none; /* belt-and-suspenders for modern iOS */
+  margin: 0;
+  overscroll-behavior-y: none; /* no rubber-band chaining past the ends */
   background: var(--black);
   font-family: 'Open Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
+/* ─── Scroll track ───────────────────────────────────────────────────── */
+/* Invisible, in normal flow — its only job is to create scrollable height.
+   One dynamic-viewport-tall segment per role, each a scroll-snap target. */
+.scroll-track { position: relative; z-index: 0; }
+.scroll-seg {
+  height: 100dvh;
+}
+
 /* ─── Stage ──────────────────────────────────────────────────────────── */
-/* viewport-fit=cover (in the HTML meta) makes this fixed, full-screen stage
-   bleed edge-to-edge behind the Dynamic Island and home indicator. The dark
-   background fills the whole physical screen; the magazine is inset from the
-   unsafe areas via env() in its own sizing rules below. */
+/* viewport-fit=cover (HTML meta) + position:fixed makes this full-screen stage
+   bleed behind the Dynamic Island and home indicator. It sits above the scroll
+   track but is pointer-events:none so touch-drags pass through to the document
+   and scroll it; only the interactive controls re-enable pointer events. */
 .stage {
   position: fixed;
   inset: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--black);
   overflow: hidden;
+  pointer-events: none;
 }
+/* Re-enable interaction only on the controls */
+.roles,
+.about-btn,
+.socials a,
+.about-panel.visible { pointer-events: auto; }
 
 /* ─── Outer background (behind magazine) ────────────────────────────── */
 .bg-outer {
@@ -363,5 +385,6 @@ html, body {
 
 /* ─── Reduced motion ─────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   .bg-outer, .bg-inner, .subject-layer, .role-title { transition: none; animation: none; }
 }

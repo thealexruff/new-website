@@ -128,6 +128,19 @@
       </div><!-- /magazine -->
     </div><!-- /stage -->
 
-    <script src="script.js?v=4"></script>
+    <!--
+      SCROLL TRACK — real scrollable height. The .stage above is position:fixed
+      so all visuals stay pinned; scrolling this track drives the role changes
+      (see script.js). Genuine scroll is what makes iOS Safari minimise its
+      top/bottom chrome, giving the edge-to-edge look. One full-height segment
+      per role; snap points make each role a deliberate "slide".
+    -->
+    <div class="scroll-track" aria-hidden="true">
+      <section class="scroll-seg" data-index="0"></section>
+      <section class="scroll-seg" data-index="1"></section>
+      <section class="scroll-seg" data-index="2"></section>
+    </div>
+
+    <script src="script.js?v=5"></script>
   </body>
 </html>
