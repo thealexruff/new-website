@@ -14,28 +14,36 @@
 
 html, body {
   height: 100%;
-  /* overscroll-behavior instead of overflow:hidden — prevents rubber-band
-     scroll without the iOS side-effect of restricting position:fixed
-     elements to the safe-area viewport rather than the full screen */
-  overscroll-behavior: none;
+  overflow: hidden;          /* prevent bounce-scroll */
+  overscroll-behavior: none; /* belt-and-suspenders for modern iOS */
   background: var(--black);
   font-family: 'Open Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 /* ─── Stage ──────────────────────────────────────────────────────────── */
+/*
+ * iOS Safari positions fixed elements relative to the safe-area viewport,
+ * not the full screen — even with viewport-fit=cover.  To bleed behind the
+ * Dynamic Island (top) and the Safari toolbar (bottom) we push the stage
+ * outward with negative env() offsets, then add matching positive padding
+ * so the magazine stays centred within the visible safe area.
+ * On desktop env() returns 0, so this degrades to top:0/padding:0 — no change.
+ */
 .stage {
   position: fixed;
-  /* Explicit longhands instead of inset:0 — better iOS <15 compatibility */
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  top:    calc(0px - env(safe-area-inset-top,    0px));
+  right:  calc(0px - env(safe-area-inset-right,  0px));
+  bottom: calc(0px - env(safe-area-inset-bottom, 0px));
+  left:   calc(0px - env(safe-area-inset-left,   0px));
+  padding-top:    env(safe-area-inset-top,    0px);
+  padding-right:  env(safe-area-inset-right,  0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left:   env(safe-area-inset-left,   0px);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #111;
-  overflow: hidden;
+  background: var(--black);
 }
 
 /* ─── Outer background (behind magazine) ────────────────────────────── */
