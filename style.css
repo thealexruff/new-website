@@ -66,17 +66,17 @@ html, body {
   --mag-pad-lr: 12px;
   --mag-pad-tb: 48px;
   aspect-ratio: 220 / 280;
-  height: calc(100vh - var(--mag-pad-tb) * 2);
+  height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--mag-pad-tb) * 2);
   width: auto;
-  max-width: calc((100vh - var(--mag-pad-tb) * 2) * 220 / 280);
+  max-width: calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--mag-pad-tb) * 2) * 220 / 280);
 }
 
 /* Portrait-fill: viewport more portrait than 220:280 */
 @media (max-aspect-ratio: 220/280) {
   .magazine {
     aspect-ratio: auto;
-    height: calc(100vh - var(--mag-pad-tb) * 2);
-    width: calc(100vw - var(--mag-pad-lr) * 2);
+    height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--mag-pad-tb) * 2);
+    width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - var(--mag-pad-lr) * 2);
     max-width: none;
   }
 }
@@ -85,8 +85,8 @@ html, body {
 @media (max-height: 550px) {
   .magazine {
     --mag-pad-tb: 12px;
-    height: calc(100vh - var(--mag-pad-tb) * 2);
-    max-width: calc((100vh - var(--mag-pad-tb) * 2) * 220 / 280);
+    height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--mag-pad-tb) * 2);
+    max-width: calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--mag-pad-tb) * 2) * 220 / 280);
   }
 }
 
@@ -186,35 +186,54 @@ html, body {
 
 /* ─── Social + About column ──────────────────────────────────────────── */
 /*
- * Anchored to bottom-left corner inside the frame.
- * The container is rotated -90deg around its own bottom-left corner
- * so it stands upright along the left edge, reading bottom→top.
- * Items in HTML order (first = bottom-most visually after rotation):
- *   Instagram (bottom) → TikTok → About (top)
- * To read top→bottom as About/TikTok/Instagram, HTML order is reversed:
- *   About first in HTML = topmost after rotation.
- * flex-direction: row-reverse flips the visual order so About ends up
- * closest to the bottom-left anchor point.
+ * Container rotated -90deg around its bottom-left corner so the strip
+ * stands upright along the left edge, reading bottom→top.
+ * HTML order (first child = bottom of strip, last = top):
+ *   TikTok (bottom) → Instagram (middle) → About (top)
+ *
+ * Left-spacing maths: the icons are 448×512 SVGs.
+ * At width:28px the Instagram img renders 32px tall (= the container height H).
+ * After rotate(-90deg) the strip's left visual edge = left_css - H.
+ * We want that edge at frame-w + frame-pad, so:
+ *   left = (frame-w + frame-pad) + H = (frame-w + frame-pad) + 32px
  */
 .socials {
   position: absolute;
   bottom: calc(var(--frame-w) + var(--frame-pad));
-  left: calc(var(--frame-w) + var(--frame-pad));
+  left: calc(var(--frame-w) + var(--frame-pad) + 32px);
   display: flex;
   flex-direction: row;
   align-items: center;
+  height: 32px;
+  overflow: visible;
   gap: 14px;
   z-index: 25;
-  transform-origin: 0% 100%; /* bottom-left corner of the element */
-  transform: rotate(-90deg) translateX(calc(var(--frame-w) + var(--frame-pad)));
+  transform-origin: 0% 100%;
+  transform: rotate(-90deg);
 }
-.socials a { display: flex; align-items: center; }
+.socials a {
+  display: flex;
+  align-items: center;
+  transition: opacity 0.45s ease;
+}
 .socials img {
   display: block;
   filter: brightness(0) invert(1);
+  transform: rotate(90deg); /* counter-rotate so icons appear right-side up on screen */
 }
-.socials a:nth-child(1) img { width: 28px; } /* Instagram */
-.socials a:nth-child(2) img { width: 22px; } /* TikTok */
+.socials a:nth-child(2) img { width: 28px; } /* Instagram */
+.socials a:nth-child(3) img { width: 22px; } /* TikTok */
+
+/* Fade out social icons when About is open */
+.socials.about-open a {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Pin About text to the cap-height edge so it grows rightward, not leftward */
+.socials.about-open {
+  align-items: flex-start;
+}
 
 /* About button */
 .about-btn {
@@ -225,16 +244,17 @@ html, body {
   -webkit-tap-highlight-color: transparent;
   font-family: 'Oswald', sans-serif;
   font-weight: 700;
-  font-size: 22px;
+  font-size: 32px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: rgba(245,245,245,0.5);
-  transition: color 0.3s ease;
+  color: var(--white);
+  transition: font-size 0.45s ease;
   white-space: nowrap;
   line-height: 1;
 }
-.about-btn:hover,
-.about-btn.active { color: var(--white); }
+.about-btn.active {
+  font-size: 80px;
+}
 
 /* ─── About panel ────────────────────────────────────────────────────── */
 .about-panel {

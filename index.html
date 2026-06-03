@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta charset="UTF-8">
     <title>Alex Ruff | freelancer</title>
     <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
@@ -92,15 +92,16 @@
         <div class="frame"></div>
 
         <!-- Social + About — rotated -90deg along left edge -->
-        <!-- HTML order is reversed: last item = topmost after rotation -->
+        <!-- HTML order: first child = bottom of strip, last = top -->
+        <!-- About (bottom) → Instagram (middle) → TikTok (top) -->
         <div class="socials">
+          <button class="about-btn" id="aboutBtn" aria-expanded="false">About</button>
           <a href="https://www.instagram.com/alexruff.de/" aria-label="Instagram">
             <img src="img/instagram.svg" alt="Instagram">
           </a>
           <a href="https://www.tiktok.com/@thealexruff" aria-label="TikTok">
             <img src="img/tiktok.svg" alt="TikTok">
           </a>
-          <button class="about-btn" id="aboutBtn" aria-expanded="false">About</button>
         </div>
 
         <!-- About panel — fades in over lower frame, roles fade out -->
@@ -127,6 +128,6 @@
       </div><!-- /magazine -->
     </div><!-- /stage -->
 
-    <script src="script.js"></script>
+    <script src="script.js?v=4"></script>
   </body>
 </html>

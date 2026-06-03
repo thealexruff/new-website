@@ -69,6 +69,7 @@
   const aboutBtn   = document.getElementById('aboutBtn');
   const aboutPanel = document.getElementById('aboutPanel');
   const rolesNav   = document.querySelector('.roles');
+  const socialsEl  = document.querySelector('.socials');
 
   function toggleAbout() {
     const isOpen = aboutPanel.classList.contains('visible');
@@ -78,12 +79,17 @@
       rolesNav.classList.remove('hidden');
       aboutBtn.classList.remove('active');
       aboutBtn.setAttribute('aria-expanded', 'false');
+      // Delay removing about-open until font-size transition finishes (450ms)
+      // so align-items: flex-start stays in place during the scale-down,
+      // preventing the jump that would happen if alignment switched mid-animation.
+      setTimeout(() => socialsEl.classList.remove('about-open'), 450);
     } else {
       aboutPanel.classList.add('visible');
       aboutPanel.setAttribute('aria-hidden', 'false');
       rolesNav.classList.add('hidden');
       aboutBtn.classList.add('active');
       aboutBtn.setAttribute('aria-expanded', 'true');
+      socialsEl.classList.add('about-open');
     }
   }
 
