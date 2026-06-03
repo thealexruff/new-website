@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <title>Alex Ruff | freelancer</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+
+    <meta property="og:title" content="Alex Ruff">
+    <meta property="og:image" content="https://www.alexruff.de/img/ogimage.jpg">
+    <meta property="og:description" content="1st AC, lighting designer & fashion — Hamburg">
+    <meta property="og:url" content="https://www.alexruff.de">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Open+Sans:wght@300;400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+
+    <div class="stage">
+
+      <!--
+        OUTER LAYER — wide images that bleed behind the magazine on desktop.
+        Positioned relative to .stage, same scale as the inner images.
+        On mobile these are hidden (frame fills viewport anyway).
+      -->
+      <div class="bg-outer active" data-role="0">
+        <img src="img/photo-role-0.jpg" alt="">
+      </div>
+      <div class="bg-outer" data-role="1">
+        <img src="img/photo-role-1.jpg" alt="">
+      </div>
+      <div class="bg-outer" data-role="2">
+        <img src="img/photo-role-2.jpg" alt="">
+      </div>
+
+      <!-- Outer darkening overlay — covers everything outside the magazine frame -->
+      <div class="outer-dim"></div>
+
+      <!-- THE MAGAZINE — fixed 220:280 ratio, centered in stage -->
+      <div class="magazine">
+
+        <!--
+          CLIP SHELL — overflow:hidden to clip bg photos & gradients.
+          Subject layer lives outside this so it can bleed above the frame.
+        -->
+        <div class="clip-shell">
+
+          <!-- Inner background photos — same image/scale as outer, perfectly registered -->
+          <div class="bg-inner active" data-role="0">
+            <img src="img/photo-role-0.jpg" alt="">
+          </div>
+          <div class="bg-inner" data-role="1">
+            <img src="img/photo-role-1.jpg" alt="">
+          </div>
+          <div class="bg-inner" data-role="2">
+            <img src="img/photo-role-2.jpg" alt="">
+          </div>
+
+          <!-- Gradients -->
+          <div class="gradient-top"></div>
+          <div class="gradient-bottom"></div>
+
+          <!--
+            MASTHEAD — behind the subject layer (z-index lower than subject).
+            Subject's head will overlap it from above.
+          -->
+          <header class="masthead">
+            <img src="img/alexruff.svg" alt="alexruff" class="masthead-svg">
+            <span class="masthead-fallback">alexruff</span>
+          </header>
+
+        </div><!-- /clip-shell -->
+
+        <!--
+          SUBJECT LAYER — PNG with alpha, outside clip-shell so head can
+          overflow the top of the magazine frame. .magazine itself has
+          overflow:visible so this works.
+          Same image sizing as bg layers = perfectly registered.
+        -->
+        <div class="subject-layer active" data-role="0">
+          <img src="img/subject-role-0.png" alt="">
+        </div>
+        <div class="subject-layer" data-role="1">
+          <img src="img/subject-role-1.png" alt="">
+        </div>
+        <div class="subject-layer" data-role="2">
+          <img src="img/subject-role-2.png" alt="">
+        </div>
+
+        <!-- Frame border — above bg/subject but below UI -->
+        <div class="frame"></div>
+
+        <!-- Social + About — rotated -90deg along left edge -->
+        <!-- HTML order is reversed: last item = topmost after rotation -->
+        <div class="socials">
+          <a href="https://www.instagram.com/alexruff.de/" aria-label="Instagram">
+            <img src="img/instagram.svg" alt="Instagram">
+          </a>
+          <a href="https://www.tiktok.com/@thealexruff" aria-label="TikTok">
+            <img src="img/tiktok.svg" alt="TikTok">
+          </a>
+          <button class="about-btn" id="aboutBtn" aria-expanded="false">About</button>
+        </div>
+
+        <!-- About panel — fades in over lower frame, roles fade out -->
+        <div class="about-panel" id="aboutPanel" aria-hidden="true">
+          <div class="about-text">
+            <p>Your text goes here. Tell people who you are, what drives you, and what kind of work you do best.</p>
+            <p>A second paragraph if you need it. Keep it short — this is a magazine cover, not a CV.</p>
+          </div>
+        </div>
+
+        <!-- Roles — bottom right -->
+        <nav class="roles" aria-label="Roles">
+          <button class="role active" data-index="0" tabindex="0">
+            <span class="role-title">1st AC</span>
+          </button>
+          <button class="role" data-index="1" tabindex="0">
+            <span class="role-title">Lighting<br>Designer</span>
+          </button>
+          <button class="role" data-index="2" tabindex="0">
+            <span class="role-title">Fashion</span>
+          </button>
+        </nav>
+
+      </div><!-- /magazine -->
+    </div><!-- /stage -->
+
+    <script src="script.js"></script>
+  </body>
+</html>

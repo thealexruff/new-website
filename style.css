@@ -1,0 +1,342 @@
+/* ─── Reset ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --white:      #f5f5f5;
+  --black:      #191919;
+  --frame-w:    10px;
+  --frame-pad:  22px;
+  --stroke-w:   1.5px;
+  --img-height: 110vh;
+  --dim-inside:  1;
+  --dim-outside: 0.55;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--black);
+  font-family: 'Open Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Stage ──────────────────────────────────────────────────────────── */
+.stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+  overflow: hidden;
+}
+
+/* ─── Outer background (behind magazine) ────────────────────────────── */
+.bg-outer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: var(--img-height);
+  width: auto;
+  opacity: 0;
+  transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+.bg-outer.active { opacity: 1; }
+.bg-outer img { height: 100%; width: auto; display: block; }
+
+/* ─── Outer dim overlay ──────────────────────────────────────────────── */
+.outer-dim {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: var(--dim-outside);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ─── Magazine container ─────────────────────────────────────────────── */
+.magazine {
+  position: relative;
+  overflow: visible;
+  z-index: 1;
+  flex-shrink: 0;
+  --mag-pad-lr: 12px;
+  --mag-pad-tb: 48px;
+  aspect-ratio: 220 / 280;
+  height: calc(100vh - var(--mag-pad-tb) * 2);
+  width: auto;
+  max-width: calc((100vh - var(--mag-pad-tb) * 2) * 220 / 280);
+}
+
+/* Portrait-fill: viewport more portrait than 220:280 */
+@media (max-aspect-ratio: 220/280) {
+  .magazine {
+    aspect-ratio: auto;
+    height: calc(100vh - var(--mag-pad-tb) * 2);
+    width: calc(100vw - var(--mag-pad-lr) * 2);
+    max-width: none;
+  }
+}
+
+/* Short viewport */
+@media (max-height: 550px) {
+  .magazine {
+    --mag-pad-tb: 12px;
+    height: calc(100vh - var(--mag-pad-tb) * 2);
+    max-width: calc((100vh - var(--mag-pad-tb) * 2) * 220 / 280);
+  }
+}
+
+/* ─── Clip shell ─────────────────────────────────────────────────────── */
+.clip-shell {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* ─── Inner background photos ────────────────────────────────────────── */
+.bg-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: var(--img-height);
+  width: auto;
+  opacity: 0;
+  transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.bg-inner.active { opacity: 1; }
+.bg-inner img { height: 100%; width: auto; display: block; }
+
+/* ─── Subject layer ──────────────────────────────────────────────────── */
+.subject-layer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: var(--img-height);
+  width: auto;
+  opacity: 0;
+  transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 20;
+}
+.subject-layer.active { opacity: 1; }
+.subject-layer img { height: 100%; width: auto; display: block; }
+
+/* ─── Gradients ──────────────────────────────────────────────────────── */
+.gradient-top {
+  position: absolute;
+  inset: 0;
+  bottom: 40%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0) 100%);
+  opacity: var(--dim-inside);
+  z-index: 3;
+  pointer-events: none;
+}
+.gradient-bottom {
+  position: absolute;
+  inset: 0;
+  top: 45%;
+  background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0) 100%);
+  opacity: var(--dim-inside);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ─── Masthead ───────────────────────────────────────────────────────── */
+.masthead {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: calc(var(--frame-w) + var(--frame-pad));
+  padding-bottom: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 10;
+}
+.masthead-svg {
+  width: 100%;
+  display: block;
+  filter: brightness(0) invert(1);
+}
+.masthead-fallback {
+  display: none;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 300;
+  font-size: clamp(18px, 4.5vmin, 56px);
+  letter-spacing: 0.22em;
+  color: var(--white);
+}
+
+/* ─── Frame border ───────────────────────────────────────────────────── */
+.frame {
+  position: absolute;
+  inset: 0;
+  border: var(--frame-w) solid var(--white);
+  z-index: 15;
+  pointer-events: none;
+}
+
+/* ─── Social + About column ──────────────────────────────────────────── */
+/*
+ * Anchored to bottom-left corner inside the frame.
+ * The container is rotated -90deg around its own bottom-left corner
+ * so it stands upright along the left edge, reading bottom→top.
+ * Items in HTML order (first = bottom-most visually after rotation):
+ *   Instagram (bottom) → TikTok → About (top)
+ * To read top→bottom as About/TikTok/Instagram, HTML order is reversed:
+ *   About first in HTML = topmost after rotation.
+ * flex-direction: row-reverse flips the visual order so About ends up
+ * closest to the bottom-left anchor point.
+ */
+.socials {
+  position: absolute;
+  bottom: calc(var(--frame-w) + var(--frame-pad));
+  left: calc(var(--frame-w) + var(--frame-pad));
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  z-index: 25;
+  transform-origin: 0% 100%; /* bottom-left corner of the element */
+  transform: rotate(-90deg) translateX(calc(var(--frame-w) + var(--frame-pad)));
+}
+.socials a { display: flex; align-items: center; }
+.socials img {
+  display: block;
+  filter: brightness(0) invert(1);
+}
+.socials a:nth-child(1) img { width: 28px; } /* Instagram */
+.socials a:nth-child(2) img { width: 22px; } /* TikTok */
+
+/* About button */
+.about-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(245,245,245,0.5);
+  transition: color 0.3s ease;
+  white-space: nowrap;
+  line-height: 1;
+}
+.about-btn:hover,
+.about-btn.active { color: var(--white); }
+
+/* ─── About panel ────────────────────────────────────────────────────── */
+.about-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 35%;
+  padding: calc(var(--frame-w) + var(--frame-pad));
+  padding-top: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  z-index: 24;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+}
+.about-panel.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+.about-text {
+  text-align: right;
+  max-width: 85%;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 300;
+  font-size: 13px;
+  line-height: 1.75;
+  letter-spacing: 0.04em;
+  color: rgba(245,245,245,0.88);
+}
+.about-text p + p { margin-top: 12px; }
+
+/* ─── Roles ──────────────────────────────────────────────────────────── */
+.roles {
+  position: absolute;
+  bottom: calc(var(--frame-w) + var(--frame-pad));
+  right: calc(var(--frame-w) + var(--frame-pad));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  z-index: 25;
+  transition: opacity 0.4s ease;
+}
+.roles.hidden { opacity: 0; pointer-events: none; }
+
+.role {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: right;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 0.88;
+}
+.role:focus-visible { outline: 1px solid var(--white); outline-offset: 3px; }
+
+.role-title {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 0.88;
+  display: block;
+  font-size: 60px;
+  color: transparent;
+  -webkit-text-stroke: var(--stroke-w) rgba(245,245,245,0.5);
+  transition: color 0.45s ease, -webkit-text-stroke 0.45s ease;
+}
+
+/* Both dimensions large enough — bump size */
+@media (min-width: 500px) and (min-height: 750px) {
+  .role-title { font-size: 95px; }
+}
+
+/* Short viewport — scale with height */
+@media (max-height: 550px) {
+  .role-title { font-size: 9vh; }
+}
+
+.role.active .role-title {
+  color: var(--white);
+  -webkit-text-stroke: 0px transparent;
+}
+.role:not(.active):hover .role-title {
+  -webkit-text-stroke: var(--stroke-w) rgba(245,245,245,0.9);
+}
+
+/* ─── Entrance animation ─────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.role { animation: fadeUp 0.6s ease both; }
+.role:nth-child(1) { animation-delay: 0.1s; }
+.role:nth-child(2) { animation-delay: 0.2s; }
+.role:nth-child(3) { animation-delay: 0.3s; }
+
+/* ─── Reduced motion ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .bg-outer, .bg-inner, .subject-layer, .role-title { transition: none; animation: none; }
+}
