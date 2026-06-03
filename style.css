@@ -221,8 +221,8 @@ html, body {
   filter: brightness(0) invert(1);
   transform: rotate(90deg); /* counter-rotate so icons appear right-side up on screen */
 }
-.socials a:nth-child(2) img { width: 28px; } /* Instagram */
-.socials a:nth-child(3) img { width: 22px; } /* TikTok */
+.socials a[aria-label="Instagram"] img { width: 28px; }
+.socials a[aria-label="TikTok"]    img { width: 22px; }
 
 /* Fade out social icons when About is open */
 .socials.about-open a {
