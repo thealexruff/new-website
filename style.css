@@ -14,7 +14,10 @@
 
 html, body {
   height: 100%;
-  overflow: hidden;
+  /* overscroll-behavior instead of overflow:hidden — prevents rubber-band
+     scroll without the iOS side-effect of restricting position:fixed
+     elements to the safe-area viewport rather than the full screen */
+  overscroll-behavior: none;
   background: var(--black);
   font-family: 'Open Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -23,7 +26,11 @@ html, body {
 /* ─── Stage ──────────────────────────────────────────────────────────── */
 .stage {
   position: fixed;
-  inset: 0;
+  /* Explicit longhands instead of inset:0 — better iOS <15 compatibility */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
