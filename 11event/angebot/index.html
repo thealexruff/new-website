@@ -303,11 +303,11 @@ function lineOf(it) {
   var p = staff ? parseAmount(it.persons) : 0;
   if (!(p > 0)) p = 0;
   var unit = Math.round(parseAmount(it.price) * 100);
-  var total = Math.round(q * unit);
+  var crewUnit = Math.round((p || 1) * unit);   // day rate for the whole crew (persons × price per person)
+  var total = Math.round(q * crewUnit);
   var d = applyDiscount(total, it.discount);
-  var role = String(it.title || "Eventtechniker").replace(/\s*(:in|\*in|_in|\/-?in|\(in\))$/i, "").trim() || "Eventtechniker";
-  var staffLabel = p ? fmtQty(p) + " " + role : "";
-  return { it: it, qty: q, persons: p, staffLabel: staffLabel.trim(), unitCents: unit, totalCents: total, discCents: d.cents, discLabel: d.label, netCents: total - d.cents };
+  var staffLabel = p ? fmtQty(p) + (p === 1 ? " Person" : " Personen") + " à " + fmtMoney(unit) + " €" : "";
+  return { it: it, qty: q, persons: p, staffLabel: staffLabel.trim(), unitCents: unit, rowUnitCents: crewUnit, totalCents: total, discCents: d.cents, discLabel: d.label, netCents: total - d.cents };
 }
 function firstName(person) {
   var parts = String(person || "").trim().split(/\s+/).filter(Boolean);
@@ -546,7 +546,7 @@ async function buildOfferPdf(lib, fontkit, fb, s) {
     }
     text(page, fmtQty(ln.qty), C.qtyR, y, F.reg, BS, { align: "right" });
     text(page, it.unit || "", C.unit, y, F.reg, BS);
-    text(page, fmtMoney(ln.unitCents), C.priceR, y, F.reg, BS, { align: "right" });
+    text(page, fmtMoney(ln.rowUnitCents), C.priceR, y, F.reg, BS, { align: "right" });
     text(page, fmtMoney(ln.totalCents), C.totalR, y, F.reg, BS, { align: "right" });
     t += h;
     hline(page, t, ML, MR, 0.6, RULE);
@@ -908,7 +908,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { stateToD
       personsF,
       field("qty", staff ? "Menge (Tage)" : "Menge", "input", { inputmode: "decimal" }),
       field("unit", "Einheit", "input", { list: "units" }),
-      field("price", staff ? "Tagespreis alle Techniker €" : "Einzelpreis €", "input", { inputmode: "decimal", placeholder: "0,00" }),
+      field("price", staff ? "Tagespreis pro Techniker €" : "Einzelpreis €", "input", { inputmode: "decimal", placeholder: "0,00" }),
       sum
     ]);
     it.discount = it.discount || { type: "eur", value: "", reason: "" };
@@ -934,7 +934,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { stateToD
       titleInp.addEventListener("input", function () {
         var st = isStaffItem(it); personsF.hidden = !st; nums.classList.toggle("staff", st);
         var ql = nums.querySelector('label[for="' + idp + 'qty"]'); if (ql && ql.firstChild) ql.firstChild.nodeValue = st ? "Menge (Tage)" : "Menge";
-        var pl = nums.querySelector('label[for="' + idp + 'price"]'); if (pl && pl.firstChild) pl.firstChild.nodeValue = st ? "Tagespreis alle Techniker €" : "Einzelpreis €";
+        var pl = nums.querySelector('label[for="' + idp + 'price"]'); if (pl && pl.firstChild) pl.firstChild.nodeValue = st ? "Tagespreis pro Techniker €" : "Einzelpreis €";
       });
     }
     return body;
