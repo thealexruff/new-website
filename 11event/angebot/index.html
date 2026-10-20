@@ -303,9 +303,10 @@ function lineOf(it) {
   var p = staff ? parseAmount(it.persons) : 0;
   if (!(p > 0)) p = 0;
   var unit = Math.round(parseAmount(it.price) * 100);
-  var total = Math.round((p || 1) * q * unit);
+  var total = Math.round(q * unit);
   var d = applyDiscount(total, it.discount);
-  var staffLabel = p ? fmtQty(p) + (p === 1 ? " Person" : " Personen") + " × " + fmtQty(q) + " " + pluralUnit(it.unit || "", q) : "";
+  var role = String(it.title || "Eventtechniker").replace(/\s*(:in|\*in|_in|\/-?in|\(in\))$/i, "").trim() || "Eventtechniker";
+  var staffLabel = p ? fmtQty(p) + " " + role : "";
   return { it: it, qty: q, persons: p, staffLabel: staffLabel.trim(), unitCents: unit, totalCents: total, discCents: d.cents, discLabel: d.label, netCents: total - d.cents };
 }
 function firstName(person) {
@@ -543,7 +544,7 @@ async function buildOfferPdf(lib, fontkit, fb, s) {
       rl.forEach(function (l, k) { text(page, l, C.title, ry + k * DS * 1.35, F.reg, DS); });
       text(page, "− " + fmtMoney(ln.discCents), C.totalR, ry, F.med, DS, { align: "right" });
     }
-    text(page, ln.persons ? fmtQty(ln.persons) + " × " + fmtQty(ln.qty) : fmtQty(ln.qty), C.qtyR, y, F.reg, BS, { align: "right" });
+    text(page, fmtQty(ln.qty), C.qtyR, y, F.reg, BS, { align: "right" });
     text(page, it.unit || "", C.unit, y, F.reg, BS);
     text(page, fmtMoney(ln.unitCents), C.priceR, y, F.reg, BS, { align: "right" });
     text(page, fmtMoney(ln.totalCents), C.totalR, y, F.reg, BS, { align: "right" });
@@ -901,13 +902,13 @@ if (typeof module !== "undefined" && module.exports) module.exports = { stateToD
     }
     var staff = opts.fixed || isStaffItem(it);
     var sum = el("div", { class: "sum", id: "sum" + key });
-    var personsF = field("persons", "Personen", "input", { inputmode: "numeric", placeholder: "1" });
+    var personsF = field("persons", "Anzahl Techniker", "input", { inputmode: "numeric", placeholder: "2" });
     personsF.hidden = !staff;
     var nums = el("div", { class: "nums" + (staff ? " staff" : "") }, [
       personsF,
-      field("qty", staff ? "Tage / Std." : "Menge", "input", { inputmode: "decimal" }),
+      field("qty", staff ? "Menge (Tage)" : "Menge", "input", { inputmode: "decimal" }),
       field("unit", "Einheit", "input", { list: "units" }),
-      field("price", staff ? "Preis pro Person €" : "Einzelpreis €", "input", { inputmode: "decimal", placeholder: "0,00" }),
+      field("price", staff ? "Tagespreis alle Techniker €" : "Einzelpreis €", "input", { inputmode: "decimal", placeholder: "0,00" }),
       sum
     ]);
     it.discount = it.discount || { type: "eur", value: "", reason: "" };
@@ -932,8 +933,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { stateToD
       var titleInp = body.querySelector("#" + idp + "title");
       titleInp.addEventListener("input", function () {
         var st = isStaffItem(it); personsF.hidden = !st; nums.classList.toggle("staff", st);
-        var ql = nums.querySelector('label[for="' + idp + 'qty"]'); if (ql && ql.firstChild) ql.firstChild.nodeValue = st ? "Tage / Std." : "Menge";
-        var pl = nums.querySelector('label[for="' + idp + 'price"]'); if (pl && pl.firstChild) pl.firstChild.nodeValue = st ? "Preis pro Person €" : "Einzelpreis €";
+        var ql = nums.querySelector('label[for="' + idp + 'qty"]'); if (ql && ql.firstChild) ql.firstChild.nodeValue = st ? "Menge (Tage)" : "Menge";
+        var pl = nums.querySelector('label[for="' + idp + 'price"]'); if (pl && pl.firstChild) pl.firstChild.nodeValue = st ? "Tagespreis alle Techniker €" : "Einzelpreis €";
       });
     }
     return body;
