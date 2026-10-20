@@ -94,6 +94,13 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .arch-row .acts .btn { font-size: 13px; padding: 8px 10px; min-height: 40px; }
 .arch-row.current { background: var(--teal-2); }
 @media (max-width: 520px) { .arch-row { grid-template-columns: minmax(0, 1fr); } .arch-row .acts { justify-content: flex-start; } }
+.gate { min-height: 100vh; display: grid; place-items: center; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px; }
+.gate form { width: min(380px, 100%); display: flex; flex-direction: column; gap: 18px; }
+.gate .brand { display: flex; align-items: flex-end; gap: 14px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.gate .brand svg { width: 22px; height: 75px; fill: var(--orange); flex-shrink: 0; }
+.gate h1 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 44px; line-height: 0.9; color: var(--orange); }
+.gate p { margin: 0; color: var(--muted); }
+.gate .err { color: var(--danger); min-height: 1.4em; }
 .sync { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-size: 15px; color: var(--muted); }
 .sync .dot { width: 9px; height: 9px; background: var(--muted); flex-shrink: 0; }
 .sync.ok .dot { background: #7fd1a8; }
@@ -120,7 +127,21 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
-<div class="wrap">
+<div class="gate" id="gate" hidden>
+  <form id="gateForm" autocomplete="on">
+    <div class="brand">
+      <svg viewBox="0 0 1137.02 3880.29" role="img" aria-label="11EVENT"><path d="M 223.88,1994.31L223.88,397.64L0.00,397.64L0.00,111.17L509.59,111.17L509.59,1994.31L223.88,1994.31Z M 851.29,1994.31L851.29,286.47L627.40,286.47L627.40,0.00L1137.00,0.00L1137.00,1994.31L851.29,1994.31Z M 1137.02,2105.42L221.34,2105.42L221.34,2418.56L342.51,2418.56L342.51,2226.94L619.85,2226.94L619.85,2344.68L739.78,2344.68L739.78,2226.94L1015.85,2226.94L1015.85,2418.56L1137.02,2418.56L1137.02,2105.42Z M 221.34,2526.28L221.34,2732.96 C 228.83,2734.20 790.98,2768.02 1137.02,2790.56L1137.02,2667.83 C 1137.02,2667.83 508.67,2628.99 504.92,2628.99 C 543.64,2628.99 1075.80,2593.92 1137.02,2591.41L1137.02,2468.68 C 773.51,2491.22 237.58,2525.04 221.34,2526.28Z M 1137.02,2840.69L221.34,2840.69L221.34,3153.82L342.51,3153.82L342.51,2962.18L619.85,2962.18L619.85,3079.92L739.78,3079.92L739.78,2962.18L1015.85,2962.18L1015.85,3153.82L1137.02,3153.82L1137.02,2840.69Z M 221.34,3203.92L221.34,3325.41L559.90,3325.41L221.34,3395.57L221.34,3517.06L1137.02,3517.06L1137.02,3395.57L798.49,3395.57L1137.02,3325.41L1137.02,3203.92L221.34,3203.92Z M 1015.85,3663.60L221.34,3663.60L221.34,3785.09L1015.85,3785.09L1015.85,3880.29L1137.02,3880.29L1137.02,3567.16L1015.85,3567.16L1015.85,3663.60Z"/></svg>
+      <h1>ANGEBOTE</h1>
+    </div>
+    <p>Angebot-Generator von 11event. Bitte mit dem Teampasswort anmelden.</p>
+    <input type="text" name="username" value="11event" autocomplete="username" hidden>
+    <label for="gatePw">Teampasswort<input id="gatePw" type="password" autocomplete="current-password" required></label>
+    <button type="submit" class="btn primary" id="gateBtn">Anmelden</button>
+    <p class="err" id="gateErr" role="alert"></p>
+  </form>
+</div>
+
+<div class="wrap" id="app">
   <header class="top">
     <svg viewBox="0 0 1137.02 3880.29" role="img" aria-label="11EVENT"><path d="M 223.88,1994.31L223.88,397.64L0.00,397.64L0.00,111.17L509.59,111.17L509.59,1994.31L223.88,1994.31Z M 851.29,1994.31L851.29,286.47L627.40,286.47L627.40,0.00L1137.00,0.00L1137.00,1994.31L851.29,1994.31Z M 1137.02,2105.42L221.34,2105.42L221.34,2418.56L342.51,2418.56L342.51,2226.94L619.85,2226.94L619.85,2344.68L739.78,2344.68L739.78,2226.94L1015.85,2226.94L1015.85,2418.56L1137.02,2418.56L1137.02,2105.42Z M 221.34,2526.28L221.34,2732.96 C 228.83,2734.20 790.98,2768.02 1137.02,2790.56L1137.02,2667.83 C 1137.02,2667.83 508.67,2628.99 504.92,2628.99 C 543.64,2628.99 1075.80,2593.92 1137.02,2591.41L1137.02,2468.68 C 773.51,2491.22 237.58,2525.04 221.34,2526.28Z M 1137.02,2840.69L221.34,2840.69L221.34,3153.82L342.51,3153.82L342.51,2962.18L619.85,2962.18L619.85,3079.92L739.78,3079.92L739.78,2962.18L1015.85,2962.18L1015.85,3153.82L1137.02,3153.82L1137.02,2840.69Z M 221.34,3203.92L221.34,3325.41L559.90,3325.41L221.34,3395.57L221.34,3517.06L1137.02,3517.06L1137.02,3395.57L798.49,3395.57L1137.02,3325.41L1137.02,3203.92L221.34,3203.92Z M 1015.85,3663.60L221.34,3663.60L221.34,3785.09L1015.85,3785.09L1015.85,3880.29L1137.02,3880.29L1137.02,3567.16L1015.85,3567.16L1015.85,3663.60Z"/></svg>
     <h1>ANGEBOT</h1>
@@ -132,15 +153,12 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
       <div class="toolbar">
         <button type="button" class="btn" id="newOffer">Neues Angebot</button>
         <button type="button" class="btn" id="archBtn" aria-expanded="false" aria-controls="arch">Archiv (0)</button>
+        <button type="button" class="btn" id="logout" hidden>Abmelden</button>
         <label class="btn file" for="openFile">PDF öffnen<input type="file" id="openFile" class="sr" accept=".pdf,.json,application/pdf,application/json"></label>
       </div>
       <section class="arch" id="arch" hidden aria-label="Archiv">
         <h2>Exportierte Angebote</h2>
         <div class="sync" id="syncLine" hidden><span class="dot" aria-hidden="true"></span><span id="syncText"></span></div>
-        <div class="pwform" id="pwForm" hidden>
-          <label for="teamPw">Teampasswort<input id="teamPw" type="password" autocomplete="current-password"></label>
-          <button type="button" class="btn" id="pwSave">Verbinden</button>
-        </div>
         <p class="hint">Jedes heruntergeladene PDF landet hier. „Bearbeiten" lädt es ins Formular; ein neuer Export aktualisiert den Eintrag. Jedes PDF trägt außerdem seine Daten in sich und lässt sich über „PDF öffnen" weiterbearbeiten.</p>
         <div class="arch-list" id="archList"></div>
         <div class="toolbar">
@@ -615,7 +633,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
   function forServer(e) { var o = Object.assign({}, e); delete o.pending; delete o.synced; delete o.pageId; return o; }
   function syncFailed(err) {
     sync.ok = false;
-    if (err && err.auth) { sync.auth = true; setPw(""); sync.msg = "Teampasswort falsch. Bitte neu eingeben."; }
+    if (err && err.auth) { sync.auth = true; setPw(""); sync.msg = ""; showGate("Das Passwort wurde geändert. Bitte neu anmelden."); }
     else sync.msg = "Notion gerade nicht erreichbar. Änderungen bleiben hier und werden beim nächsten Mal übertragen.";
   }
   function syncNow() {
@@ -645,9 +663,40 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
         saveArch();
         sync.ok = true; sync.auth = false; sync.msg = ""; sync.at = new Date();
       } catch (err) { syncFailed(err); }
-      finally { sync.busy = null; renderArch(); updateNumHint(); renderSync(); }
+      finally { sync.busy = null; renderArch(); updateNumHint(); renderSync(); setTimeout(backfillPdfs, 500); }
     })();
     return sync.busy;
+  }
+  async function uploadPdf(num, bytes, name) {
+    if (!sync.on || !getPw()) return false;
+    try {
+      var r = await fetch(SYNC_URL.replace(/\/$/, "") + "/offers/" + encodeURIComponent(num) + "/pdf?name=" + encodeURIComponent(name), {
+        method: "POST", cache: "no-store",
+        headers: { "X-Team-Password": getPw(), "Content-Type": "application/pdf" },
+        body: new Blob([bytes], { type: "application/pdf" })
+      });
+      var ok = r.ok;
+      var e = ARCH.offers[num]; if (e && ok) { e.hasPdf = true; saveArch(); }
+      return ok;
+    } catch (err) { return false; }
+  }
+  function pdfName(st) {
+    var clean = function (x) { return String(x || "").normalize("NFKD").replace(/[^\w\-]+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, ""); };
+    var c = st.client || {}, who = clean(c.company || c.person);
+    return "Angebot_" + (clean((st.offer || {}).number) || "11event") + (who ? "_" + who : "") + ".pdf";
+  }
+  var backfilling = false;
+  async function backfillPdfs() {
+    if (backfilling || !sync.on || !getPw() || !window.PDFLib) return;
+    backfilling = true;
+    try {
+      var keys = Object.keys(ARCH.offers).filter(function (k) { var e = ARCH.offers[k]; return e.hasPdf === false && e.state && !e.pending; }).slice(0, 5);
+      for (var i = 0; i < keys.length; i++) {
+        var e = ARCH.offers[keys[i]];
+        var bytes = await buildOfferPdf(window.PDFLib, window.fontkit, FB, e.state);
+        await uploadPdf(keys[i], bytes, pdfName(e.state));
+      }
+    } catch (err) {} finally { backfilling = false; }
   }
   async function pushOne(num) {
     if (!sync.on || !getPw()) return;
@@ -656,15 +705,17 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
       var res = await api("PUT", "/offers/" + encodeURIComponent(num), forServer(e));
       e.synced = true; e.pending = false; if (res.offer && res.offer.status) e.status = res.offer.status;
       sync.ok = true; sync.auth = false; sync.msg = ""; sync.at = new Date();
+      saveArch(); renderSync(); renderArch();
+      return true;
     } catch (err) { e.pending = true; syncFailed(err); }
     saveArch(); renderSync(); renderArch();
+    return false;
   }
   function renderSync() {
-    var line = $("syncLine"), form = $("pwForm");
+    var line = $("syncLine");
     if (!line) return;
-    if (!sync.on) { line.hidden = true; form.hidden = true; return; }
+    if (!sync.on) { line.hidden = true; return; }
     var needPw = !getPw();
-    form.hidden = !needPw;
     line.hidden = false;
     line.className = "sync" + (sync.ok ? " ok" : (sync.msg && !/Synchronisiere/.test(sync.msg) ? " err" : ""));
     var pending = Object.keys(ARCH.offers).filter(function (k) { return ARCH.offers[k].pending; }).length;
@@ -689,10 +740,11 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
       exports: (prev ? prev.exports || 0 : 0) + (opts && opts.noCount ? 0 : 1),
       state: clone(st),
       status: prev ? prev.status : "offen",
+      hasPdf: prev ? prev.hasPdf : undefined,
       pending: true
     });
     bumpSeq(num); saveArch();
-    pushOne(num);
+    if (!(opts && opts.noPush)) pushOne(num);
   }
 
   var EXAMPLE_ITEMS = [
@@ -966,8 +1018,19 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
     var btn = this; btn.disabled = true;
     try {
       await downloads.save({ filename: filename(), data: new Blob([lastBytes], { type: "application/pdf" }) });
-      upsertArchive(S); renderArch(); updateNumHint();
-      setStatus("Gespeichert und im Archiv: " + filename());
+      var num = String((S.offer || {}).number || "").trim(), fname = filename(), pdfBytes = lastBytes;
+      upsertArchive(S, { noPush: true }); renderArch(); updateNumHint();
+      setStatus("Gespeichert: " + fname + (sync.on ? " · wird in Notion abgelegt …" : ""));
+      if (sync.on) {
+        (async function () {
+          var ok = await pushOne(num);
+          var pdfOk = ok && await uploadPdf(num, pdfBytes, fname);
+          setStatus(pdfOk ? "Gespeichert und mit PDF in Notion abgelegt: " + fname
+            : ok ? "Gespeichert und in Notion abgelegt. Das PDF wird beim nächsten Abgleich nachgereicht."
+            : "Gespeichert. Notion war nicht erreichbar, wird beim nächsten Mal übertragen.", !ok);
+          if (ok && !pdfOk && ARCH.offers[num]) { ARCH.offers[num].hasPdf = false; saveArch(); }
+        })();
+      }
     } catch (e) {
       var code = e && e.code;
       if (code === "declined") setStatus("Download abgebrochen.");
@@ -1052,12 +1115,6 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
   $("archBtn").addEventListener("click", function () {
     var p = $("arch"), open = p.hidden; p.hidden = !open; this.setAttribute("aria-expanded", String(open)); if (open) { renderArch(); renderSync(); syncNow(); }
   });
-  function savePw() {
-    var v = $("teamPw").value.trim(); if (!v) return;
-    setPw(v); $("teamPw").value = ""; sync.auth = false; sync.msg = ""; renderSync(); syncNow();
-  }
-  $("pwSave").addEventListener("click", savePw);
-  $("teamPw").addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); savePw(); } });
   $("archExport").addEventListener("click", async function () {
     if (!downloads) return;
     try {
@@ -1093,9 +1150,37 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
     } catch (e) { setStatus("Datei konnte nicht gelesen werden.", true); }
   });
 
+  function showGate(msg) {
+    if (!sync.on) return;
+    $("gate").hidden = false; $("app").hidden = true;
+    $("gateErr").textContent = msg || "";
+    setTimeout(function () { try { $("gatePw").focus(); } catch (e) {} }, 50);
+  }
+  function hideGate() { $("gate").hidden = true; $("app").hidden = false; $("logout").hidden = !sync.on; }
+  $("gateForm").addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+    var v = $("gatePw").value; if (!v) return;
+    var btn = $("gateBtn"); btn.disabled = true; $("gateErr").textContent = "";
+    setPw(v);
+    try {
+      await api("GET", "/ping");
+      $("gatePw").value = ""; hideGate(); sync.auth = false; syncNow();
+    } catch (err) {
+      setPw("");
+      $("gateErr").textContent = err && err.auth ? "Passwort falsch." : "Server nicht erreichbar. Internetverbindung prüfen und nochmal versuchen.";
+    } finally { btn.disabled = false; }
+  });
+  $("logout").addEventListener("click", function () {
+    setPw("");
+    ARCH = { v: 1, lastSeq: {}, offers: {} }; saveArch(); renderArch(); updateNumHint();
+    sync.ok = false; sync.msg = "";
+    showGate("Abgemeldet.");
+  });
+
   fillForm(); renderTotals(); renderArch(); updateNumHint(); updateGreetHint(); setStatus("Erstelle Vorschau …"); rebuild();
-  renderSync(); syncNow();
-  if (sync.on && !getPw()) { $("arch").hidden = false; $("archBtn").setAttribute("aria-expanded", "true"); }
+  renderSync();
+  if (sync.on && !getPw()) showGate();
+  else { hideGate(); syncNow(); }
   var ro; try { var lastW = 0; ro = new ResizeObserver(function (en) { var w = Math.round(en[0].contentRect.width); if (Math.abs(w - lastW) > 40) { lastW = w; if (lastBytes) renderPreview(lastBytes, building); } }); ro.observe($("sheets")); } catch (e) {}
 
   if (window.claude && window.claude.use) {
