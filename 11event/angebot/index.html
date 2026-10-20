@@ -54,11 +54,19 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .btn.primary:hover { background: #ffb27b; }
 .btn:disabled { opacity: 0.5; cursor: default; }
 .items { display: flex; flex-direction: column; gap: 12px; }
-.item { border: 1px solid var(--line); background: #142d31; padding: 12px; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
-.item .num { font-family: var(--font-label); font-weight: 700; color: var(--orange); font-size: 18px; padding-top: 24px; }
+.item { border: 1px solid var(--line); background: #142d31; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.item.fixed { border-color: var(--orange); }
+.item.fixed.off { border-style: dashed; background: transparent; }
+.fixed-head { display: flex; align-items: center; gap: 12px; }
+.fixed-title { font-weight: 700; font-size: 17px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange); }
+.fixed-state { color: var(--muted); font-size: 14px; margin-right: auto; }
+.switch { width: 52px; height: 30px; border: 1px solid var(--line); background: var(--teal-2); padding: 3px; display: inline-flex; flex-shrink: 0; }
+.switch .knob { width: 22px; height: 22px; background: var(--muted); transition: transform .15s; }
+.switch[aria-checked="true"] { background: var(--orange); border-color: var(--orange); }
+.switch[aria-checked="true"] .knob { background: var(--teal); transform: translateX(22px); }
 .item .body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .item .nums { display: grid; grid-template-columns: 80px 110px minmax(0, 1fr) auto; gap: 10px; align-items: end; }
-.item .nums.staff { grid-template-columns: 80px 80px 100px minmax(0, 1fr) auto; }
+.item .nums.staff { grid-template-columns: 80px 90px 90px minmax(0, 1fr) auto; }
 @media (max-width: 520px) { .item .nums, .item .nums.staff { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .item .sum { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 17px; text-align: right; padding-bottom: 9px; white-space: nowrap; }
 .item .tools { display: flex; gap: 6px; justify-content: flex-end; }
@@ -168,11 +176,10 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 
       <fieldset>
         <legend>Positionen</legend>
-        <p class="hint" id="exampleHint">Die Positionen unten sind Beispiele. Überschreiben oder entfernen.</p>
+        <p class="hint" id="exampleHint">Preise und Positionen unten sind Beispiele. Überschreiben oder entfernen.</p>
         <div class="items" id="items"></div>
         <div class="actions">
           <button type="button" class="btn" id="addItem">+ Position</button>
-          <button type="button" class="btn" id="addStaff">+ Eventtechniker</button>
           <label for="vat" style="flex: 1 1 220px">Umsatzsteuer
             <select id="vat">
               <option value="19">19 % USt. ausweisen</option>
@@ -284,8 +291,13 @@ async function readOfferData(lib, bytes) {
   if (!v || !v.decodeText) return null;
   return JSON.parse(v.decodeText());
 }
+function allItems(s) {
+  var arr = (s.items || []).slice();
+  if (s.staff && s.staff.enabled) arr.unshift(Object.assign({}, s.staff, { staff: true }));
+  return arr;
+}
 function computeTotals(s) {
-  var rows = (s.items || []).filter(function (it) { return (it.title || "").trim() || (it.detail || "").trim() || parseAmount(it.price); });
+  var rows = allItems(s).filter(function (it) { return (it.title || "").trim() || (it.detail || "").trim() || parseAmount(it.price); });
   var lines = rows.map(lineOf);
   var sub = lines.reduce(function (a, l) { return a + l.netCents; }, 0);
   var od = applyDiscount(sub, s.discount);
@@ -379,14 +391,13 @@ async function buildOfferPdf(lib, fontkit, fb, s) {
 
   // ---- table geometry
   var C = {
-    pos: ML, title: ML + 9.5 * MM, titleW: 86 * MM,
+    title: ML, titleW: 95.5 * MM,
     qtyR: ML + 111 * MM, unit: ML + 114 * MM, priceR: ML + 150.5 * MM, totalR: MR
   };
   var LBL = 9, LBL_TR = 0.05;
   function tableHead() {
     hline(page, t, ML, MR, 1.1);
     var y = t + 2.4 * MM;
-    text(page, "POS.", C.pos, y, F.bold, LBL, { track: LBL_TR });
     text(page, "LEISTUNG", C.title, y, F.bold, LBL, { track: LBL_TR });
     text(page, "MENGE", C.qtyR, y, F.bold, LBL, { align: "right" });
     text(page, "EINHEIT", C.unit, y, F.bold, LBL, { track: LBL_TR });
@@ -448,7 +459,6 @@ async function buildOfferPdf(lib, fontkit, fb, s) {
     var h = RP * 2 + tl.length * BS * 1.3 + dl.length * 10 * 1.35 + (rl.length ? 1.2 * MM + rl.length * DS * 1.35 : 0);
     if (ensure(h)) tableHead();
     var y = t + RP;
-    text(page, String(i + 1), C.pos, y, F.reg, BS);
     tl.forEach(function (l, k) { text(page, l, C.title, y + k * BS * 1.3, F.med, BS); });
     var dy = y + tl.length * BS * 1.3;
     dl.forEach(function (l, k) { text(page, l, C.title, dy + k * 13.5, F.light, 10); });
@@ -587,9 +597,22 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
 
   var EXAMPLE_ITEMS = [
     { title: "Lichttechnik Grundpaket", detail: "Moving Heads, Pixelbars, Lichtpult inkl. Programmierung", qty: "1", unit: "Pausch.", price: "1.450,00" },
-    { title: "Eventtechniker:in", detail: "Aufbau, Betrieb, Abbau", persons: "2", qty: "10", unit: "Std.", price: "45,00", staff: true },
     { title: "Transport", detail: "An- und Abfahrt Hamburg", qty: "1", unit: "Pausch.", price: "120,00" }
   ];
+  function defaultStaff() {
+    return { enabled: true, title: "Eventtechniker:in", detail: "Aufbau, Betrieb, Abbau", persons: "2", qty: "1", unit: "Tag", price: "", discount: { type: "eur", value: "", reason: "" } };
+  }
+  function normalize(st) {
+    if (!st.items) st.items = [];
+    if (!st.staff) {
+      var idx = -1;
+      st.items.forEach(function (it, i) { if (idx < 0 && isStaffItem(it)) idx = i; });
+      if (idx >= 0) { var it = st.items.splice(idx, 1)[0]; st.staff = Object.assign(defaultStaff(), it, { enabled: true }); delete st.staff.staff; }
+      else st.staff = Object.assign(defaultStaff(), { enabled: false });
+    }
+    if (!st.staff.discount) st.staff.discount = { type: "eur", value: "", reason: "" };
+    return st;
+  }
   function defaults() {
     return {
       sender: { name: "Alex, Björn & Raik", co: "Freibürofler", street: "Humboldtstraße 9", city: "22083 Hamburg", email: "hallo@11event.de", phone: "" },
@@ -599,6 +622,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
       closing: "Zur Buchung reicht eine kurze Bestätigung per E-Mail. Wir freuen uns auf euer Event.",
       vat: "19",
       discount: { type: "eur", value: "", reason: "" },
+      staff: Object.assign(defaultStaff(), { price: "380,00" }),
       items: EXAMPLE_ITEMS.map(function (x) { return Object.assign({}, x); }),
       examples: true
     };
@@ -616,6 +640,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
   if (S.sender && (!S.sender.name || /^(Alex Ruff|Björn Lingner|Raik)$/.test(S.sender.name))) S.sender.name = "Alex, Björn & Raik";
   if (S.sender && S.sender.co == null) S.sender.co = "Freibürofler";
   if (!S.discount) S.discount = { type: "eur", value: "", reason: "" };
+  normalize(S);
 
   var bind = {
     s_name: ["sender", "name"], s_co: ["sender", "co"], s_email: ["sender", "email"], s_street: ["sender", "street"], s_city: ["sender", "city"], s_phone: ["sender", "phone"],
@@ -656,83 +681,94 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
     (kids || []).forEach(function (c) { e.appendChild(c); });
     return e;
   }
+  function card(it, key, opts) {
+    opts = opts || {};
+    var idp = "it" + key + "_";
+    function field(k, label, type, extra) {
+      var id = idp + k;
+      var inp = type === "textarea" ? el("textarea", Object.assign({ id: id, rows: "2" }, extra || {})) : el("input", Object.assign({ id: id }, extra || {}));
+      inp.value = it[k] || "";
+      inp.addEventListener("input", function () { it[k] = inp.value; S.examples = false; $("exampleHint").hidden = true; updateRowSum(it, key); changed(); });
+      return el("label", { for: id }, [document.createTextNode(label), inp]);
+    }
+    var staff = opts.fixed || isStaffItem(it);
+    var sum = el("div", { class: "sum", id: "sum" + key });
+    var personsF = field("persons", "Personen", "input", { inputmode: "numeric", placeholder: "1" });
+    personsF.hidden = !staff;
+    var nums = el("div", { class: "nums" + (staff ? " staff" : "") }, [
+      personsF,
+      field("qty", staff ? "Tage / Std." : "Menge", "input", { inputmode: "decimal" }),
+      field("unit", "Einheit", "input", { list: "units" }),
+      field("price", staff ? "Preis pro Person €" : "Einzelpreis €", "input", { inputmode: "decimal", placeholder: "0,00" }),
+      sum
+    ]);
+    it.discount = it.discount || { type: "eur", value: "", reason: "" };
+    var dVal = el("input", { id: idp + "dv", inputmode: "decimal", placeholder: "0" }); dVal.value = it.discount.value || "";
+    var dRes = el("input", { id: idp + "dr", placeholder: "z. B. Stammkunde" }); dRes.value = it.discount.reason || "";
+    var bE = el("button", { type: "button", role: "radio", text: "€" }), bP = el("button", { type: "button", role: "radio", text: "%" });
+    function dt(tp) { it.discount.type = tp; bE.setAttribute("aria-checked", String(tp !== "pct")); bP.setAttribute("aria-checked", String(tp === "pct")); }
+    dt(it.discount.type || "eur");
+    bE.addEventListener("click", function () { dt("eur"); updateRowSum(it, key); changed(); });
+    bP.addEventListener("click", function () { dt("pct"); updateRowSum(it, key); changed(); });
+    dVal.addEventListener("input", function () { it.discount.value = dVal.value; S.examples = false; updateRowSum(it, key); changed(); });
+    dRes.addEventListener("input", function () { it.discount.reason = dRes.value; changed(); });
+    var discRow = el("div", { class: "disc" }, [
+      el("label", { for: idp + "dv" }, [document.createTextNode("Rabatt auf Position"), dVal]),
+      el("div", { class: "seg", role: "radiogroup", "aria-label": "Rabatt-Art" }, [bE, bP]),
+      el("label", { for: idp + "dr" }, [document.createTextNode("Grund (optional)"), dRes])
+    ]);
+    var kids = [field("title", "Leistung", "input"), field("detail", "Beschreibung (optional)", "textarea"), nums, discRow];
+    if (opts.tools) kids.push(opts.tools);
+    var body = el("div", { class: "body" }, kids);
+    if (!opts.fixed) {
+      var titleInp = body.querySelector("#" + idp + "title");
+      titleInp.addEventListener("input", function () {
+        var st = isStaffItem(it); personsF.hidden = !st; nums.classList.toggle("staff", st);
+        var ql = nums.querySelector('label[for="' + idp + 'qty"]'); if (ql && ql.firstChild) ql.firstChild.nodeValue = st ? "Tage / Std." : "Menge";
+        var pl = nums.querySelector('label[for="' + idp + 'price"]'); if (pl && pl.firstChild) pl.firstChild.nodeValue = st ? "Preis pro Person €" : "Einzelpreis €";
+      });
+    }
+    return body;
+  }
   function renderItems() {
     var box = $("items"); box.textContent = "";
     $("exampleHint").hidden = !S.examples;
+    var stf = S.staff;
+    var sw = el("button", { type: "button", class: "switch", role: "switch", "aria-checked": String(!!stf.enabled), id: "staffSwitch", "aria-label": "Eventtechniker im Angebot" }, [el("span", { class: "knob", "aria-hidden": "true" })]);
+    var head = el("div", { class: "fixed-head" }, [
+      el("span", { class: "fixed-title", text: "Eventtechniker" }),
+      el("span", { class: "fixed-state", text: stf.enabled ? "im Angebot" : "nicht im Angebot" }),
+      sw
+    ]);
+    var stBody = card(stf, "st", { fixed: true });
+    stBody.hidden = !stf.enabled;
+    sw.addEventListener("click", function () { stf.enabled = !stf.enabled; S.examples = false; renderItems(); changed(); var s2 = $("staffSwitch"); if (s2) s2.focus(); });
+    box.appendChild(el("div", { class: "item fixed" + (stf.enabled ? "" : " off") }, [head, stBody]));
+    updateRowSum(stf, "st");
     S.items.forEach(function (it, i) {
-      function field(key, label, type, extra) {
-        var id = "it" + i + "_" + key;
-        var inp = type === "textarea" ? el("textarea", Object.assign({ id: id, rows: "2" }, extra || {})) : el("input", Object.assign({ id: id }, extra || {}));
-        inp.value = it[key] || "";
-        inp.addEventListener("input", function () { it[key] = inp.value; S.examples = false; $("exampleHint").hidden = true; updateRowSum(i); changed(); });
-        return el("label", { for: id }, [document.createTextNode(label), inp]);
-      }
-      var up = el("button", { type: "button", class: "icon-btn", "aria-label": "Position " + (i + 1) + " nach oben", html: ICON_UP });
-      var down = el("button", { type: "button", class: "icon-btn", "aria-label": "Position " + (i + 1) + " nach unten", html: ICON_DOWN });
-      var del = el("button", { type: "button", class: "icon-btn", "aria-label": "Position " + (i + 1) + " entfernen", html: ICON_X });
+      var up = el("button", { type: "button", class: "icon-btn", "aria-label": "Position nach oben", html: ICON_UP });
+      var down = el("button", { type: "button", class: "icon-btn", "aria-label": "Position nach unten", html: ICON_DOWN });
+      var del = el("button", { type: "button", class: "icon-btn", "aria-label": "Position entfernen", html: ICON_X });
       up.disabled = i === 0; down.disabled = i === S.items.length - 1;
       up.addEventListener("click", function () { move(i, -1); });
       down.addEventListener("click", function () { move(i, 1); });
       del.addEventListener("click", function () { S.items.splice(i, 1); renderItems(); changed(); });
-      var sum = el("div", { class: "sum", id: "sum" + i });
-      var personsF = field("persons", "Personen", "input", { inputmode: "numeric", placeholder: "1" });
-      personsF.hidden = !isStaffItem(it);
-      var nums = el("div", { class: "nums" + (isStaffItem(it) ? " staff" : "") }, [
-        personsF,
-        field("qty", isStaffItem(it) ? "Tage / Std." : "Menge", "input", { inputmode: "decimal" }),
-        field("unit", "Einheit", "input", { list: "units" }),
-        field("price", "Einzelpreis €", "input", { inputmode: "decimal", placeholder: "0,00" }),
-        sum
-      ]);
-      it.discount = it.discount || { type: "eur", value: "", reason: "" };
-      var dId = "it" + i + "_d";
-      var dVal = el("input", { id: dId + "v", inputmode: "decimal", placeholder: "0" }); dVal.value = it.discount.value || "";
-      var dRes = el("input", { id: dId + "r", placeholder: "z. B. Stammkunde" }); dRes.value = it.discount.reason || "";
-      var bE = el("button", { type: "button", role: "radio", text: "€" }), bP = el("button", { type: "button", role: "radio", text: "%" });
-      function dt(tp) { it.discount.type = tp; bE.setAttribute("aria-checked", String(tp !== "pct")); bP.setAttribute("aria-checked", String(tp === "pct")); }
-      dt(it.discount.type || "eur");
-      bE.addEventListener("click", function () { dt("eur"); updateRowSum(i); changed(); });
-      bP.addEventListener("click", function () { dt("pct"); updateRowSum(i); changed(); });
-      dVal.addEventListener("input", function () { it.discount.value = dVal.value; S.examples = false; updateRowSum(i); changed(); });
-      dRes.addEventListener("input", function () { it.discount.reason = dRes.value; changed(); });
-      var discRow = el("div", { class: "disc" }, [
-        el("label", { for: dId + "v" }, [document.createTextNode("Rabatt auf Position"), dVal]),
-        el("div", { class: "seg", role: "radiogroup", "aria-label": "Rabatt-Art Position " + (i + 1) }, [bE, bP]),
-        el("label", { for: dId + "r" }, [document.createTextNode("Grund (optional)"), dRes])
-      ]);
-      var body = el("div", { class: "body" }, [
-        field("title", "Leistung", "input"),
-        field("detail", "Beschreibung (optional)", "textarea"),
-        nums,
-        discRow,
-        el("div", { class: "tools" }, [up, down, del])
-      ]);
-      var titleInp = body.querySelector("#it" + i + "_title");
-      if (titleInp) titleInp.addEventListener("input", function () {
-        var st = isStaffItem(it); personsF.hidden = !st; nums.classList.toggle("staff", st);
-        var ql = nums.querySelector('label[for="it' + i + '_qty"]'); if (ql && ql.firstChild) ql.firstChild.nodeValue = st ? "Tage / Std." : "Menge";
-      });
-      box.appendChild(el("div", { class: "item" }, [el("div", { class: "num", text: String(i + 1) }), body]));
-      updateRowSum(i);
+      box.appendChild(el("div", { class: "item" }, [card(it, String(i), { tools: el("div", { class: "tools" }, [up, down, del]) })]));
+      updateRowSum(it, String(i));
     });
     if (!$("units")) {
       var dl = el("datalist", { id: "units" });
-      ["Pausch.", "Std.", "Tag", "Schicht", "Stk.", "km"].forEach(function (u) { dl.appendChild(el("option", { value: u })); });
+      ["Tag", "Std.", "Schicht", "Pausch.", "Stk.", "km"].forEach(function (u) { dl.appendChild(el("option", { value: u })); });
       document.body.appendChild(dl);
     }
   }
   function move(i, d) { var j = i + d; var t = S.items[i]; S.items[i] = S.items[j]; S.items[j] = t; renderItems(); changed(); }
-  function updateRowSum(i) {
-    var it = S.items[i], node = $("sum" + i); if (!node) return;
-    var ln = lineOf(it), f = function (c) { return (c / 100).toLocaleString("de-DE", { minimumFractionDigits: 2 }) + " €"; };
+  function updateRowSum(it, key) {
+    var node = $("sum" + key); if (!node) return;
+    var ln = lineOf(key === "st" ? Object.assign({}, it, { staff: true }) : it), f = function (c) { return (c / 100).toLocaleString("de-DE", { minimumFractionDigits: 2 }) + " €"; };
     node.textContent = f(ln.netCents);
     node.title = ln.discCents > 0 ? f(ln.totalCents) + " − " + f(ln.discCents) : "";
   }
-  $("addStaff").addEventListener("click", function () {
-    S.items.push({ title: "Eventtechniker:in", detail: "Aufbau, Betrieb, Abbau", persons: "2", qty: "1", unit: "Tag", price: "", staff: true });
-    S.examples = false; renderItems(); changed();
-    var n = S.items.length - 1; var f = $("it" + n + "_persons"); if (f) f.focus();
-  });
   $("addItem").addEventListener("click", function () {
     S.items.push({ title: "", detail: "", qty: "1", unit: "Pausch.", price: "" });
     renderItems(); changed();
@@ -744,9 +780,10 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
     }
     bumpSeq(S.offer && S.offer.number);
     var next = nextNumber();
-    var keep = S.sender;
+    var keep = S.sender, prevStaff = S.staff || {}, ds = defaultStaff();
     var d = defaults();
-    S = d; S.sender = keep; S.offer.number = next; S.items = [{ title: "", detail: "", qty: "1", unit: "Pausch.", price: "" }]; S.examples = false;
+    S = d; S.sender = keep; S.offer.number = next; S.items = []; S.examples = false;
+    S.staff = Object.assign(ds, { title: prevStaff.title || ds.title, detail: prevStaff.detail || ds.detail, unit: prevStaff.unit || ds.unit, price: prevStaff.price || "" });
     fillForm(); changed();
   });
 
@@ -857,7 +894,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
   function updateGreetHint() { var g = $("c_greet"); g.placeholder = "Moin " + (firstName((S.client || {}).person) || "…"); }
 
   function loadState(st) {
-    S = clone(st);
+    S = normalize(clone(st));
     if (!S.discount) S.discount = { type: "eur", value: "", reason: "" };
     S.examples = false;
     fillForm(); changed(); renderArch();
