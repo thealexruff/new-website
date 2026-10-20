@@ -329,6 +329,49 @@ function allItems(s) {
   if (s.staff && s.staff.enabled) arr.unshift(Object.assign({}, s.staff, { staff: true }));
   return arr;
 }
+// ---- form state <-> Notion columns (one offer row + one sub-item per line item)
+function numOrNull(v) { var s = String(v == null ? "" : v).trim(); if (!s) return null; var n = parseAmount(s); return isFinite(n) ? n : null; }
+function fmtNum(n, dec) {
+  if (n == null || n === "") return "";
+  return Number(n).toLocaleString("de-DE", { minimumFractionDigits: dec || 0, maximumFractionDigits: dec == null ? 2 : Math.max(dec, 2), useGrouping: false });
+}
+function stateToDoc(st) {
+  var T = computeTotals(st), c = st.client || {}, o = st.offer || {}, d = st.discount || {};
+  return {
+    number: String(o.number || "").trim(), date: o.date || "", validUntil: o.validUntil || "",
+    company: c.company || "", person: c.person || "", greetName: c.greetName || "", clientStreet: c.street || "", clientCity: c.city || "",
+    event: o.event || "", eventDate: o.eventDate || "", location: o.location || "",
+    intro: st.intro || "", closing: st.closing || "", vat: st.vat === "ku" ? "ku" : "19",
+    discount: { type: d.type === "pct" ? "pct" : "eur", value: numOrNull(d.value), reason: d.reason || "" },
+    netCents: T.net, vatCents: T.vat, grossCents: T.gross,
+    positions: T.lines.map(function (ln) {
+      var it = ln.it, dd = it.discount || {};
+      return {
+        title: it.title || "", detail: it.detail || "", staff: it.staff === true,
+        persons: ln.persons || null, qty: ln.qty, unit: it.unit || "", price: ln.unitCents / 100,
+        discount: { type: dd.type === "pct" ? "pct" : "eur", value: numOrNull(dd.value), reason: dd.reason || "" },
+        sumCents: ln.netCents
+      };
+    })
+  };
+}
+function docToState(doc) {
+  var disc = function (d) { d = d || {}; return { type: d.type === "pct" ? "pct" : "eur", value: d.value == null ? "" : fmtNum(d.value), reason: d.reason || "" }; };
+  var item = function (p) {
+    return { title: p.title || "", detail: p.detail || "", persons: p.persons == null ? "" : fmtNum(p.persons), qty: p.qty == null ? "" : fmtNum(p.qty),
+      unit: p.unit || "", price: p.price == null ? "" : fmtNum(p.price, 2), discount: disc(p.discount) };
+  };
+  var pos = doc.positions || [], staffPos = null, items = [];
+  pos.forEach(function (p) { if (p.staff && !staffPos) staffPos = p; else items.push(item(p)); });
+  return {
+    client: { company: doc.company || "", person: doc.person || "", greetName: doc.greetName || "", street: doc.clientStreet || "", city: doc.clientCity || "" },
+    offer: { number: doc.number || "", date: doc.date || "", validUntil: doc.validUntil || "", event: doc.event || "", eventDate: doc.eventDate || "", location: doc.location || "" },
+    intro: doc.intro || "", closing: doc.closing || "", vat: doc.vat === "ku" ? "ku" : "19",
+    discount: disc(doc.discount),
+    staff: staffPos ? Object.assign({ enabled: true }, item(staffPos)) : { enabled: false },
+    items: items
+  };
+}
 function computeTotals(s) {
   var rows = allItems(s).filter(function (it) { return (it.title || "").trim() || (it.detail || "").trim() || parseAmount(it.price); });
   var lines = rows.map(lineOf);
@@ -566,7 +609,7 @@ async function buildOfferPdf(lib, fontkit, fb, s) {
   } catch (e) {}
   return await doc.save();
 }
-if (typeof module !== "undefined" && module.exports) module.exports = { isStaffItem: isStaffItem, readOfferData: readOfferData, firstName: firstName, lineOf: lineOf, buildOfferPdf: buildOfferPdf, computeTotals: computeTotals, parseAmount: parseAmount };
+if (typeof module !== "undefined" && module.exports) module.exports = { stateToDoc: stateToDoc, docToState: docToState, computeTotals: computeTotals, isStaffItem: isStaffItem, readOfferData: readOfferData, firstName: firstName, lineOf: lineOf, buildOfferPdf: buildOfferPdf, computeTotals: computeTotals, parseAmount: parseAmount };
 
 </script>
 <script>
@@ -630,7 +673,21 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
       return await r.json();
     } finally { clearTimeout(to); }
   }
-  function forServer(e) { var o = Object.assign({}, e); delete o.pending; delete o.synced; delete o.pageId; return o; }
+  function forServer(e) {
+    var doc = stateToDoc(e.state);
+    doc.number = e.number || doc.number;
+    doc.exports = e.exports || 0; doc.updatedAt = e.updatedAt; doc.createdAt = e.createdAt;
+    return doc;
+  }
+  function entryFromServer(o) {
+    var st = o.legacyState ? o.legacyState : docToState(o);
+    var e = Object.assign({}, o, { state: st, synced: true });
+    delete e.positions; delete e.legacyState;
+    if (o.legacyState) e.pending = true; // old format: convert to columns on the next push
+    var T = computeTotals(normalize(clone(st)));
+    e.grossCents = T.gross; e.netCents = T.net; e.vatCents = T.vat;
+    return e;
+  }
   function syncFailed(err) {
     sync.ok = false;
     if (err && err.auth) { sync.auth = true; setPw(""); sync.msg = ""; showGate("Das Passwort wurde geändert. Bitte neu anmelden."); }
@@ -645,18 +702,15 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
       try {
         var data = await api("GET", "/offers");
         var server = {};
-        (data.offers || []).forEach(function (o) { if (o.number && o.state) { o.synced = true; server[o.number] = o; } });
-        var keys = Object.keys(ARCH.offers);
+        (data.offers || []).forEach(function (o) { if (o.number) server[o.number] = entryFromServer(o); });
+        var keys = Object.keys(ARCH.offers).concat(Object.keys(server).filter(function (k) { return !ARCH.offers[k]; }));
         for (var i = 0; i < keys.length; i++) {
-          var k = keys[i], loc = ARCH.offers[k];
-          if (!loc || !loc.state) continue;
-          var srv = server[k];
-          var push = loc.pending || (!srv && !loc.synced);
-          if (push) {
-            var res = await api("PUT", "/offers/" + encodeURIComponent(k), forServer(loc));
-            var merged = Object.assign({}, loc, { synced: true, pending: false, status: (res.offer && res.offer.status) || (srv && srv.status) || "offen" });
-            server[k] = merged;
-          }
+          var k = keys[i], loc = ARCH.offers[k], srv = server[k], src = null;
+          if (srv && srv.pending) src = srv;                                   // old "Daten" format in Notion: convert to columns
+          else if (loc && loc.state && (loc.pending || (!srv && !loc.synced))) src = loc;  // local change not yet in Notion
+          if (!src) continue;
+          var res = await api("PUT", "/offers/" + encodeURIComponent(k), forServer(src));
+          server[k] = Object.assign({}, src, { synced: true, pending: false, status: (res.offer && res.offer.status) || (srv && srv.status) || "offen", hasPdf: srv ? srv.hasPdf : src.hasPdf });
         }
         ARCH.offers = server;
         Object.keys(server).forEach(bumpSeq);
@@ -762,7 +816,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
       if (idx >= 0) { var it = st.items.splice(idx, 1)[0]; st.staff = Object.assign(defaultStaff(), it, { enabled: true }); delete st.staff.staff; }
       else st.staff = Object.assign(defaultStaff(), { enabled: false });
     }
+    st.staff = Object.assign(defaultStaff(), st.staff);
     if (!st.staff.discount) st.staff.discount = { type: "eur", value: "", reason: "" };
+    if (!st.sender) st.sender = clone((S && S.sender) || defaults().sender);
     return st;
   }
   function defaults() {
