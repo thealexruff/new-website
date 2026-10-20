@@ -70,6 +70,22 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .seg button { min-width: 44px; height: 40px; background: var(--teal-2); border: 1px solid var(--line); color: var(--muted); font-weight: 700; font-size: 17px; }
 .seg button + button { border-left: 0; }
 .seg button[aria-checked="true"] { background: var(--orange); border-color: var(--orange); color: var(--teal); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.toolbar .file { display: inline-flex; align-items: center; }
+.toolbar .file:focus-within { outline: 2px solid var(--orange); outline-offset: 1px; }
+.arch { border: 1px solid var(--orange); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.arch h2 { margin: 0; font-weight: 700; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange); }
+.arch-list { display: flex; flex-direction: column; }
+.arch-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; padding: 10px 0; border-top: 1px solid var(--line); align-items: center; }
+.arch-row .meta { min-width: 0; }
+.arch-row .no { font-weight: 700; color: var(--orange); font-variant-numeric: tabular-nums; }
+.arch-row .who { overflow-wrap: anywhere; }
+.arch-row .sub { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.arch-row .acts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.arch-row .acts .btn { font-size: 13px; padding: 8px 10px; min-height: 40px; }
+.arch-row.current { background: var(--teal-2); }
+@media (max-width: 520px) { .arch-row { grid-template-columns: minmax(0, 1fr); } .arch-row .acts { justify-content: flex-start; } }
+.btn.warn { border-color: var(--danger); color: var(--danger); }
 .totals { display: grid; grid-template-columns: 1fr auto; gap: 4px 20px; font-variant-numeric: tabular-nums; font-size: 17px; border-top: 1px solid var(--line); padding-top: 12px; }
 .totals .grand { font-family: var(--font-label); font-weight: 700; letter-spacing: 0.05em; color: var(--orange); font-size: 18px; }
 .totals .grandv { font-weight: 800; color: var(--orange); font-size: 20px; text-align: right; }
@@ -89,11 +105,24 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
   <header class="top">
     <svg viewBox="0 0 1137.02 3880.29" role="img" aria-label="11EVENT"><path d="M 223.88,1994.31L223.88,397.64L0.00,397.64L0.00,111.17L509.59,111.17L509.59,1994.31L223.88,1994.31Z M 851.29,1994.31L851.29,286.47L627.40,286.47L627.40,0.00L1137.00,0.00L1137.00,1994.31L851.29,1994.31Z M 1137.02,2105.42L221.34,2105.42L221.34,2418.56L342.51,2418.56L342.51,2226.94L619.85,2226.94L619.85,2344.68L739.78,2344.68L739.78,2226.94L1015.85,2226.94L1015.85,2418.56L1137.02,2418.56L1137.02,2105.42Z M 221.34,2526.28L221.34,2732.96 C 228.83,2734.20 790.98,2768.02 1137.02,2790.56L1137.02,2667.83 C 1137.02,2667.83 508.67,2628.99 504.92,2628.99 C 543.64,2628.99 1075.80,2593.92 1137.02,2591.41L1137.02,2468.68 C 773.51,2491.22 237.58,2525.04 221.34,2526.28Z M 1137.02,2840.69L221.34,2840.69L221.34,3153.82L342.51,3153.82L342.51,2962.18L619.85,2962.18L619.85,3079.92L739.78,3079.92L739.78,2962.18L1015.85,2962.18L1015.85,3153.82L1137.02,3153.82L1137.02,2840.69Z M 221.34,3203.92L221.34,3325.41L559.90,3325.41L221.34,3395.57L221.34,3517.06L1137.02,3517.06L1137.02,3395.57L798.49,3395.57L1137.02,3325.41L1137.02,3203.92L221.34,3203.92Z M 1015.85,3663.60L221.34,3663.60L221.34,3785.09L1015.85,3785.09L1015.85,3880.29L1137.02,3880.29L1137.02,3567.16L1015.85,3567.16L1015.85,3663.60Z"/></svg>
     <h1>ANGEBOT</h1>
-    <p>Felder ausfüllen, Vorschau prüfen, PDF laden.<br>Entwurf bleibt in diesem Browser gespeichert.</p>
+    <p>Felder ausfüllen, Vorschau prüfen, PDF laden.<br>Entwurf und Archiv bleiben in diesem Browser gespeichert.</p>
   </header>
 
   <div class="grid">
     <form class="form" id="f" autocomplete="off">
+      <div class="toolbar">
+        <button type="button" class="btn" id="newOffer">Neues Angebot</button>
+        <button type="button" class="btn" id="archBtn" aria-expanded="false" aria-controls="arch">Archiv (0)</button>
+        <label class="btn file" for="openFile">PDF öffnen<input type="file" id="openFile" class="sr" accept=".pdf,.json,application/pdf,application/json"></label>
+      </div>
+      <section class="arch" id="arch" hidden aria-label="Archiv">
+        <h2>Exportierte Angebote</h2>
+        <p class="hint">Jedes heruntergeladene PDF landet hier. „Bearbeiten" lädt es ins Formular; ein neuer Export aktualisiert den Eintrag. Jedes PDF trägt außerdem seine Daten in sich und lässt sich über „PDF öffnen" auch auf einem anderen Gerät weiterbearbeiten.</p>
+        <div class="arch-list" id="archList"></div>
+        <div class="toolbar">
+          <button type="button" class="btn" id="archExport">Archiv sichern (JSON)</button>
+        </div>
+      </section>
       <fieldset>
         <legend>Von</legend>
         <div class="row three">
@@ -112,8 +141,9 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
         <legend>An</legend>
         <div class="row">
           <label for="c_company">Firma<input id="c_company" placeholder="Firma oder Name"></label>
-          <label for="c_person">Ansprechpartner:in<input id="c_person" placeholder="z. B. Sabine"></label>
+          <label for="c_person">Ansprechpartner:in<input id="c_person" placeholder="z. B. Sabine Schmidt"></label>
         </div>
+        <label for="c_greet">Name nach „Moin" (leer = Vorname automatisch)<input id="c_greet" placeholder="Moin …"></label>
         <div class="row">
           <label for="c_street">Straße<input id="c_street"></label>
           <label for="c_city">PLZ / Ort<input id="c_city"></label>
@@ -123,7 +153,7 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
       <fieldset>
         <legend>Angebot</legend>
         <div class="row three">
-          <label for="o_number">Angebotsnr.<input id="o_number"></label>
+          <label for="o_number">Angebotsnr.<input id="o_number"><span class="hint" id="numHint" hidden></span></label>
           <label for="o_date">Datum<input id="o_date" type="date"></label>
           <label for="o_valid">Gültig bis<input id="o_valid" type="date"></label>
         </div>
@@ -164,10 +194,6 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
         <label for="closing">Schlusstext (die Gültigkeit wird automatisch davor gesetzt)<textarea id="closing" rows="3"></textarea></label>
       </fieldset>
 
-      <div class="actions">
-        <button type="button" class="btn" id="newOffer">Neues Angebot</button>
-        <p class="hint">Behält den Absender, zählt die Nummer hoch und leert Kunde und Positionen.</p>
-      </div>
     </form>
 
     <section class="preview" aria-label="Vorschau">
@@ -230,6 +256,22 @@ function lineOf(it) {
   var total = Math.round(q * unit);
   var d = applyDiscount(total, it.discount);
   return { it: it, qty: q, unitCents: unit, totalCents: total, discCents: d.cents, discLabel: d.label, netCents: total - d.cents };
+}
+function firstName(person) {
+  var parts = String(person || "").trim().split(/\s+/).filter(Boolean);
+  while (parts.length > 1 && /^(herr|frau|hr\.?|fr\.?|dr\.?|prof\.?)$/i.test(parts[0])) parts.shift();
+  return parts[0] || "";
+}
+function greetingName(cl) {
+  cl = cl || {};
+  return (cl.greetName || "").trim() || firstName(cl.person);
+}
+var DATA_KEY = "ElevenEventAngebot";
+async function readOfferData(lib, bytes) {
+  var d = await lib.PDFDocument.load(bytes, { updateMetadata: false });
+  var v = d.getInfoDict().lookup(lib.PDFName.of(DATA_KEY));
+  if (!v || !v.decodeText) return null;
+  return JSON.parse(v.decodeText());
 }
 function computeTotals(s) {
   var rows = (s.items || []).filter(function (it) { return (it.title || "").trim() || (it.detail || "").trim() || parseAmount(it.price); });
@@ -376,7 +418,8 @@ async function buildOfferPdf(lib, fontkit, fb, s) {
   // ---- title + intro
   text(page, ("Angebot Nr. " + (of.number || "")).toUpperCase(), ML, t, F.bold, 19.5);
   t += 19.5 + 3.5 * MM;
-  var greet = (cl.person || "").trim() ? "Moin " + cl.person.trim() + "," : "Moin,";
+  var gn = greetingName(cl);
+  var greet = gn ? "Moin " + gn + "," : "Moin,";
   var introLines = [greet].concat(wrap(s.intro || "", F.reg, BS, 160 * MM));
   introLines.forEach(function (l) { ensure(BS * 1.45); text(page, l, ML, t, F.reg, BS); t += BS * 1.45; });
   t += 6 * MM;
@@ -462,9 +505,13 @@ async function buildOfferPdf(lib, fontkit, fb, s) {
     c3.forEach(function (l, k) { text(p, l, MR, fy + k * FLH, F.light, FS, { align: "right" }); });
   });
 
+  try {
+    var payload = JSON.stringify({ v: 1, app: "11event-angebot", savedAt: new Date().toISOString(), state: s });
+    doc.getInfoDict().set(lib.PDFName.of(DATA_KEY), lib.PDFHexString.fromText(payload));
+  } catch (e) {}
   return await doc.save();
 }
-if (typeof module !== "undefined" && module.exports) module.exports = { lineOf: lineOf, buildOfferPdf: buildOfferPdf, computeTotals: computeTotals, parseAmount: parseAmount };
+if (typeof module !== "undefined" && module.exports) module.exports = { readOfferData: readOfferData, firstName: firstName, lineOf: lineOf, buildOfferPdf: buildOfferPdf, computeTotals: computeTotals, parseAmount: parseAmount };
 
 </script>
 <script>
@@ -486,6 +533,46 @@ if (typeof module !== "undefined" && module.exports) module.exports = { lineOf: 
   var today = iso(new Date());
   var YEAR = today.slice(0, 4);
 
+  // ---- archive (browser) — shape kept flat so a Notion sync can map it later
+  var ARCH_KEY = "11event-angebote-v1";
+  function loadArch() {
+    var a = null;
+    try { a = JSON.parse(localStorage.getItem(ARCH_KEY) || "null"); } catch (e) {}
+    if (!a || typeof a !== "object" || !a.offers) a = { v: 1, lastSeq: {}, offers: {} };
+    a.lastSeq = a.lastSeq || {};
+    return a;
+  }
+  function saveArch() { try { localStorage.setItem(ARCH_KEY, JSON.stringify(ARCH)); } catch (e) {} }
+  var ARCH = loadArch();
+  var NUM_RE = /^ANG-(\d{4})-(\d+)$/;
+  function bumpSeq(number) {
+    var m = NUM_RE.exec(String(number || "").trim()); if (!m) return;
+    var n = parseInt(m[2], 10); if (!(ARCH.lastSeq[m[1]] >= n)) ARCH.lastSeq[m[1]] = n;
+  }
+  function nextNumber() {
+    var y = YEAR, max = ARCH.lastSeq[y] || 0;
+    Object.keys(ARCH.offers).forEach(function (k) { var m = NUM_RE.exec(k); if (m && m[1] === y) max = Math.max(max, parseInt(m[2], 10)); });
+    return "ANG-" + y + "-" + String(max + 1).padStart(3, "0");
+  }
+  function clone(x) { return JSON.parse(JSON.stringify(x)); }
+  function summaryOf(st) {
+    var T = computeTotals(st), c = st.client || {}, o = st.offer || {};
+    return { number: o.number || "", date: o.date || "", validUntil: o.validUntil || "", company: c.company || "", person: c.person || "",
+      event: o.event || "", eventDate: o.eventDate || "", location: o.location || "", positions: T.lines.length,
+      netCents: T.net, vatCents: T.vat, grossCents: T.gross, vat: st.vat || "19" };
+  }
+  function upsertArchive(st, opts) {
+    var num = String((st.offer || {}).number || "").trim(); if (!num) return;
+    var prev = ARCH.offers[num], now = new Date().toISOString();
+    ARCH.offers[num] = Object.assign({}, summaryOf(st), {
+      createdAt: prev ? prev.createdAt : (opts && opts.createdAt) || now,
+      updatedAt: (opts && opts.updatedAt) || now,
+      exports: (prev ? prev.exports || 0 : 0) + (opts && opts.noCount ? 0 : 1),
+      state: clone(st)
+    });
+    bumpSeq(num); saveArch();
+  }
+
   var EXAMPLE_ITEMS = [
     { title: "Lichttechnik Grundpaket", detail: "Moving Heads, Pixelbars, Lichtpult inkl. Programmierung", qty: "1", unit: "Pausch.", price: "1.450,00" },
     { title: "Eventtechniker:in", detail: "Aufbau, Betrieb, Abbau · 2 Personen à 10 Std.", qty: "20", unit: "Std.", price: "45,00" },
@@ -495,7 +582,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { lineOf: 
     return {
       sender: { name: "Alex, Björn & Raik", co: "Freibürofler", street: "Humboldtstraße 9", city: "22083 Hamburg", email: "hallo@11event.de", phone: "" },
       client: { company: "", person: "", street: "", city: "" },
-      offer: { number: "ANG-" + YEAR + "-001", date: today, validUntil: addDays(today, 30), event: "", eventDate: "", location: "" },
+      offer: { number: nextNumber(), date: today, validUntil: addDays(today, 30), event: "", eventDate: "", location: "" },
       intro: "danke für eure Anfrage. Für euer Event bieten wir euch folgende Leistungen an:",
       closing: "Zur Buchung reicht eine kurze Bestätigung per E-Mail. Wir freuen uns auf euer Event.",
       vat: "19",
@@ -520,7 +607,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { lineOf: 
 
   var bind = {
     s_name: ["sender", "name"], s_co: ["sender", "co"], s_email: ["sender", "email"], s_street: ["sender", "street"], s_city: ["sender", "city"], s_phone: ["sender", "phone"],
-    c_company: ["client", "company"], c_person: ["client", "person"], c_street: ["client", "street"], c_city: ["client", "city"],
+    c_company: ["client", "company"], c_person: ["client", "person"], c_greet: ["client", "greetName"], c_street: ["client", "street"], c_city: ["client", "city"],
     o_number: ["offer", "number"], o_date: ["offer", "date"], o_valid: ["offer", "validUntil"], o_event: ["offer", "event"], o_eventDate: ["offer", "eventDate"], o_location: ["offer", "location"]
   };
   function $(id) { return document.getElementById(id); }
@@ -627,8 +714,11 @@ if (typeof module !== "undefined" && module.exports) module.exports = { lineOf: 
     var n = S.items.length - 1; var f = $("it" + n + "_title"); if (f) f.focus();
   });
   $("newOffer").addEventListener("click", function () {
-    var m = /^(.*?)(\d+)$/.exec(S.offer.number || "");
-    var next = m ? m[1] + String(parseInt(m[2], 10) + 1).padStart(m[2].length, "0") : (S.offer.number || "");
+    if (S.offer && S.offer.number && !ARCH.offers[S.offer.number.trim()] && draftHasContent()) {
+      if (!arm(this, "Entwurf verwerfen?")) return;
+    }
+    bumpSeq(S.offer && S.offer.number);
+    var next = nextNumber();
     var keep = S.sender;
     var d = defaults();
     S = d; S.sender = keep; S.offer.number = next; S.items = [{ title: "", detail: "", qty: "1", unit: "Pausch.", price: "" }]; S.examples = false;
@@ -646,7 +736,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { lineOf: 
 
   var timer = null, lastBytes = null, building = 0;
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
-  function changed() { save(); renderTotals(); clearTimeout(timer); timer = setTimeout(rebuild, 350); }
+  function changed() { save(); renderTotals(); updateNumHint(); updateGreetHint(); clearTimeout(timer); timer = setTimeout(rebuild, 350); }
 
   var pdfjs = window.pdfjsLib || null;
   if (pdfjs) { try { pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; } catch (e) {} }
@@ -661,7 +751,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { lineOf: 
       if (my !== building) return;
       lastBytes = bytes;
       $("dl").disabled = !downloads;
-      if (downloads) setStatus("");
+      if (downloads && (/^(Erstelle|Lade)/.test($("status").textContent) || $("status").classList.contains("err"))) setStatus("");
       else if (downloadsChecked) setStatus("Download ist in dieser Ansicht nicht verfügbar. Öffne die Seite direkt in Claude.", true);
       await renderPreview(bytes, my);
     } catch (e) {
@@ -711,7 +801,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { lineOf: 
     var btn = this; btn.disabled = true;
     try {
       await downloads.save({ filename: filename(), data: new Blob([lastBytes], { type: "application/pdf" }) });
-      setStatus("Gespeichert: " + filename());
+      upsertArchive(S); renderArch(); updateNumHint();
+      setStatus("Gespeichert und im Archiv: " + filename());
     } catch (e) {
       var code = e && e.code;
       if (code === "declined") setStatus("Download abgebrochen.");
@@ -720,7 +811,110 @@ if (typeof module !== "undefined" && module.exports) module.exports = { lineOf: 
     } finally { btn.disabled = !downloads; }
   });
 
-  fillForm(); renderTotals(); setStatus("Erstelle Vorschau …"); rebuild();
+  // ---- two-click confirm for destructive buttons
+  function arm(btn, label) {
+    if (btn.dataset.armed === "1") { btn.dataset.armed = ""; btn.textContent = btn.dataset.label; btn.classList.remove("warn"); return true; }
+    btn.dataset.label = btn.textContent; btn.dataset.armed = "1"; btn.textContent = label; btn.classList.add("warn");
+    setTimeout(function () { if (btn.dataset.armed === "1") { btn.dataset.armed = ""; btn.textContent = btn.dataset.label; btn.classList.remove("warn"); } }, 4000);
+    return false;
+  }
+  function draftHasContent() {
+    if (S.examples) return false;
+    var c = S.client || {};
+    return !!((c.company || c.person || "").trim() || (S.items || []).some(function (it) { return (it.title || "").trim() || parseAmount(it.price); }));
+  }
+  function fmtEur(c) { return (c / 100).toLocaleString("de-DE", { minimumFractionDigits: 2 }) + " €"; }
+  function updateNumHint() {
+    var h = $("numHint"), num = String((S.offer || {}).number || "").trim(), e = ARCH.offers[num];
+    if (e) { h.hidden = false; h.textContent = "Schon exportiert am " + fmtDate(e.updatedAt.slice(0, 10)) + ". Neuer Export aktualisiert den Eintrag."; }
+    else h.hidden = true;
+  }
+  function updateGreetHint() { var g = $("c_greet"); g.placeholder = "Moin " + (firstName((S.client || {}).person) || "…"); }
+
+  function loadState(st) {
+    S = clone(st);
+    if (!S.discount) S.discount = { type: "eur", value: "", reason: "" };
+    S.examples = false;
+    fillForm(); changed(); renderArch();
+    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) {}
+  }
+  function renderArch() {
+    var list = $("archList"), keys = Object.keys(ARCH.offers);
+    $("archBtn").textContent = "Archiv (" + keys.length + ")";
+    list.textContent = "";
+    if (!keys.length) { list.appendChild(el("p", { class: "hint", text: "Noch nichts exportiert. Das erste heruntergeladene PDF erscheint hier." })); return; }
+    keys.sort(function (a, b) { return (ARCH.offers[b].updatedAt || "").localeCompare(ARCH.offers[a].updatedAt || ""); });
+    var cur = String((S.offer || {}).number || "").trim();
+    keys.forEach(function (k) {
+      var e = ARCH.offers[k];
+      var who = [e.company, e.event].filter(Boolean).join(" · ") || "Ohne Kunde";
+      var sub = fmtDate(e.date) + " · " + fmtEur(e.grossCents) + (e.vat === "ku" ? "" : " brutto") + " · zuletzt " + fmtDate((e.updatedAt || "").slice(0, 10));
+      var bEdit = el("button", { type: "button", class: "btn", text: "Bearbeiten" });
+      var bPdf = el("button", { type: "button", class: "btn", text: "PDF" });
+      var bDel = el("button", { type: "button", class: "btn", text: "Löschen", "aria-label": "Angebot " + k + " aus dem Archiv löschen" });
+      bEdit.addEventListener("click", function () {
+        var curN = String((S.offer || {}).number || "").trim();
+        if (curN !== k && !ARCH.offers[curN] && draftHasContent() && !arm(bEdit, "Entwurf verwerfen?")) return;
+        loadState(e.state); setStatus("Angebot " + k + " geladen.");
+      });
+      bPdf.addEventListener("click", async function () {
+        if (!downloads) return;
+        try {
+          var bytes = await buildOfferPdf(window.PDFLib, window.fontkit, FB, e.state);
+          var cleanN = String(k).replace(/[^\w\-]+/g, "_");
+          await downloads.save({ filename: "Angebot_" + cleanN + ".pdf", data: new Blob([bytes], { type: "application/pdf" }) });
+          setStatus("PDF " + k + " erneut heruntergeladen.");
+        } catch (err) { if (!(err && err.code === "declined")) setStatus("PDF konnte nicht erstellt werden.", true); }
+      });
+      bDel.addEventListener("click", function () {
+        if (!arm(bDel, "Wirklich löschen?")) return;
+        delete ARCH.offers[k]; saveArch(); renderArch(); updateNumHint(); setStatus("Angebot " + k + " aus dem Archiv gelöscht.");
+      });
+      list.appendChild(el("div", { class: "arch-row" + (k === cur ? " current" : "") }, [
+        el("div", { class: "meta" }, [el("div", {}, [el("span", { class: "no", text: k }), document.createTextNode("  "), el("span", { class: "who", text: who })]), el("div", { class: "sub", text: sub })]),
+        el("div", { class: "acts" }, [bEdit, bPdf, bDel])
+      ]));
+    });
+  }
+  $("archBtn").addEventListener("click", function () {
+    var p = $("arch"), open = p.hidden; p.hidden = !open; this.setAttribute("aria-expanded", String(open)); if (open) renderArch();
+  });
+  $("archExport").addEventListener("click", async function () {
+    if (!downloads) return;
+    try {
+      await downloads.save({ filename: "11event-angebote-" + today + ".json", data: new Blob([JSON.stringify(ARCH, null, 2)], { type: "application/json" }) });
+      setStatus("Archiv gesichert.");
+    } catch (e) { if (!(e && e.code === "declined")) setStatus("Sichern nicht möglich.", true); }
+  });
+  $("openFile").addEventListener("change", async function () {
+    var f = this.files && this.files[0]; this.value = ""; if (!f) return;
+    try {
+      var buf = new Uint8Array(await f.arrayBuffer());
+      if (/\.json$/i.test(f.name) || f.type === "application/json") {
+        var data = JSON.parse(new TextDecoder().decode(buf));
+        if (data && data.offers) {
+          var n = 0;
+          Object.keys(data.offers).forEach(function (k) {
+            var inc = data.offers[k], have = ARCH.offers[k];
+            if (inc && inc.state && (!have || (inc.updatedAt || "") > (have.updatedAt || ""))) { ARCH.offers[k] = inc; bumpSeq(k); n++; }
+          });
+          Object.keys(data.lastSeq || {}).forEach(function (y) { if (!(ARCH.lastSeq[y] >= data.lastSeq[y])) ARCH.lastSeq[y] = data.lastSeq[y]; });
+          saveArch(); renderArch(); updateNumHint(); setStatus(n + " Angebot(e) ins Archiv übernommen.");
+          $("arch").hidden = false; $("archBtn").setAttribute("aria-expanded", "true");
+          return;
+        }
+        if (data && data.state) { loadState(data.state); return; }
+        throw new Error("format");
+      }
+      var d = await readOfferData(window.PDFLib, buf);
+      if (!d || !d.state) { setStatus("Dieses PDF enthält keine Angebotsdaten. Nur PDFs ab dieser Version lassen sich wieder öffnen.", true); return; }
+      upsertArchive(d.state, { noCount: true, updatedAt: d.savedAt });
+      loadState(d.state);
+      setStatus("Angebot " + ((d.state.offer || {}).number || "") + " aus PDF geladen.");
+    } catch (e) { setStatus("Datei konnte nicht gelesen werden.", true); }
+  });
+
+  fillForm(); renderTotals(); renderArch(); updateNumHint(); updateGreetHint(); setStatus("Erstelle Vorschau …"); rebuild();
   var ro; try { var lastW = 0; ro = new ResizeObserver(function (en) { var w = Math.round(en[0].contentRect.width); if (Math.abs(w - lastW) > 40) { lastW = w; if (lastBytes) renderPreview(lastBytes, building); } }); ro.observe($("sheets")); } catch (e) {}
 
   if (window.claude && window.claude.use) {
