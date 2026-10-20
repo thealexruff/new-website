@@ -94,6 +94,16 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .arch-row .acts .btn { font-size: 13px; padding: 8px 10px; min-height: 40px; }
 .arch-row.current { background: var(--teal-2); }
 @media (max-width: 520px) { .arch-row { grid-template-columns: minmax(0, 1fr); } .arch-row .acts { justify-content: flex-start; } }
+.sync { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-size: 15px; color: var(--muted); }
+.sync .dot { width: 9px; height: 9px; background: var(--muted); flex-shrink: 0; }
+.sync.ok .dot { background: #7fd1a8; }
+.sync.err { color: var(--danger); }
+.sync.err .dot { background: var(--danger); }
+.pwform { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.pwform label { flex: 1 1 200px; }
+.badge { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border: 1px solid currentColor; margin-left: 6px; vertical-align: 1px; }
+.badge.angenommen { color: #7fd1a8; }
+.badge.abgelehnt { color: var(--danger); }
 .btn.warn { border-color: var(--danger); color: var(--danger); }
 .totals { display: grid; grid-template-columns: 1fr auto; gap: 4px 20px; font-variant-numeric: tabular-nums; font-size: 17px; border-top: 1px solid var(--line); padding-top: 12px; }
 .totals .grand { font-family: var(--font-label); font-weight: 700; letter-spacing: 0.05em; color: var(--orange); font-size: 18px; }
@@ -114,7 +124,7 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
   <header class="top">
     <svg viewBox="0 0 1137.02 3880.29" role="img" aria-label="11EVENT"><path d="M 223.88,1994.31L223.88,397.64L0.00,397.64L0.00,111.17L509.59,111.17L509.59,1994.31L223.88,1994.31Z M 851.29,1994.31L851.29,286.47L627.40,286.47L627.40,0.00L1137.00,0.00L1137.00,1994.31L851.29,1994.31Z M 1137.02,2105.42L221.34,2105.42L221.34,2418.56L342.51,2418.56L342.51,2226.94L619.85,2226.94L619.85,2344.68L739.78,2344.68L739.78,2226.94L1015.85,2226.94L1015.85,2418.56L1137.02,2418.56L1137.02,2105.42Z M 221.34,2526.28L221.34,2732.96 C 228.83,2734.20 790.98,2768.02 1137.02,2790.56L1137.02,2667.83 C 1137.02,2667.83 508.67,2628.99 504.92,2628.99 C 543.64,2628.99 1075.80,2593.92 1137.02,2591.41L1137.02,2468.68 C 773.51,2491.22 237.58,2525.04 221.34,2526.28Z M 1137.02,2840.69L221.34,2840.69L221.34,3153.82L342.51,3153.82L342.51,2962.18L619.85,2962.18L619.85,3079.92L739.78,3079.92L739.78,2962.18L1015.85,2962.18L1015.85,3153.82L1137.02,3153.82L1137.02,2840.69Z M 221.34,3203.92L221.34,3325.41L559.90,3325.41L221.34,3395.57L221.34,3517.06L1137.02,3517.06L1137.02,3395.57L798.49,3395.57L1137.02,3325.41L1137.02,3203.92L221.34,3203.92Z M 1015.85,3663.60L221.34,3663.60L221.34,3785.09L1015.85,3785.09L1015.85,3880.29L1137.02,3880.29L1137.02,3567.16L1015.85,3567.16L1015.85,3663.60Z"/></svg>
     <h1>ANGEBOT</h1>
-    <p>Felder ausfüllen, Vorschau prüfen, PDF laden.<br>Entwurf und Archiv bleiben in diesem Browser gespeichert.</p>
+    <p>Felder ausfüllen, Vorschau prüfen, PDF laden.<br>Entwurf und Archiv werden automatisch gespeichert.</p>
   </header>
 
   <div class="grid">
@@ -126,7 +136,12 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
       </div>
       <section class="arch" id="arch" hidden aria-label="Archiv">
         <h2>Exportierte Angebote</h2>
-        <p class="hint">Jedes heruntergeladene PDF landet hier. „Bearbeiten" lädt es ins Formular; ein neuer Export aktualisiert den Eintrag. Jedes PDF trägt außerdem seine Daten in sich und lässt sich über „PDF öffnen" auch auf einem anderen Gerät weiterbearbeiten.</p>
+        <div class="sync" id="syncLine" hidden><span class="dot" aria-hidden="true"></span><span id="syncText"></span></div>
+        <div class="pwform" id="pwForm" hidden>
+          <label for="teamPw">Teampasswort<input id="teamPw" type="password" autocomplete="current-password"></label>
+          <button type="button" class="btn" id="pwSave">Verbinden</button>
+        </div>
+        <p class="hint">Jedes heruntergeladene PDF landet hier. „Bearbeiten" lädt es ins Formular; ein neuer Export aktualisiert den Eintrag. Jedes PDF trägt außerdem seine Daten in sich und lässt sich über „PDF öffnen" weiterbearbeiten.</p>
         <div class="arch-list" id="archList"></div>
         <div class="toolbar">
           <button type="button" class="btn" id="archExport">Archiv sichern (JSON)</button>
@@ -577,6 +592,88 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
     return "ANG-" + y + "-" + String(max + 1).padStart(3, "0");
   }
   function clone(x) { return JSON.parse(JSON.stringify(x)); }
+
+  // ---- shared archive in Notion (via the 11event Cloudflare Worker)
+  var SYNC_URL = "";
+  var PW_KEY = "11event-team-pw";
+  var sync = { on: !!SYNC_URL && !(window.claude && window.claude.use), ok: false, auth: false, msg: "", at: null, busy: null };
+  function getPw() { try { return localStorage.getItem(PW_KEY) || ""; } catch (e) { return ""; } }
+  function setPw(v) { try { if (v) localStorage.setItem(PW_KEY, v); else localStorage.removeItem(PW_KEY); } catch (e) {} }
+  async function api(method, path, body) {
+    var ctrl = new AbortController(), to = setTimeout(function () { ctrl.abort(); }, 15000);
+    try {
+      var r = await fetch(SYNC_URL.replace(/\/$/, "") + path, {
+        method: method, signal: ctrl.signal, cache: "no-store",
+        headers: Object.assign({ "X-Team-Password": getPw() }, body ? { "Content-Type": "application/json" } : {}),
+        body: body ? JSON.stringify(body) : undefined
+      });
+      if (r.status === 401) { var e = new Error("auth"); e.auth = true; throw e; }
+      if (!r.ok) throw new Error("http " + r.status);
+      return await r.json();
+    } finally { clearTimeout(to); }
+  }
+  function forServer(e) { var o = Object.assign({}, e); delete o.pending; delete o.synced; delete o.pageId; return o; }
+  function syncFailed(err) {
+    sync.ok = false;
+    if (err && err.auth) { sync.auth = true; setPw(""); sync.msg = "Teampasswort falsch. Bitte neu eingeben."; }
+    else sync.msg = "Notion gerade nicht erreichbar. Änderungen bleiben hier und werden beim nächsten Mal übertragen.";
+  }
+  function syncNow() {
+    if (!sync.on) return Promise.resolve();
+    if (!getPw()) { sync.ok = false; sync.msg = ""; renderSync(); return Promise.resolve(); }
+    if (sync.busy) return sync.busy;
+    sync.msg = "Synchronisiere mit Notion …"; renderSync();
+    sync.busy = (async function () {
+      try {
+        var data = await api("GET", "/offers");
+        var server = {};
+        (data.offers || []).forEach(function (o) { if (o.number && o.state) { o.synced = true; server[o.number] = o; } });
+        var keys = Object.keys(ARCH.offers);
+        for (var i = 0; i < keys.length; i++) {
+          var k = keys[i], loc = ARCH.offers[k];
+          if (!loc || !loc.state) continue;
+          var srv = server[k];
+          var push = loc.pending || (!srv && !loc.synced);
+          if (push) {
+            var res = await api("PUT", "/offers/" + encodeURIComponent(k), forServer(loc));
+            var merged = Object.assign({}, loc, { synced: true, pending: false, status: (res.offer && res.offer.status) || (srv && srv.status) || "offen" });
+            server[k] = merged;
+          }
+        }
+        ARCH.offers = server;
+        Object.keys(server).forEach(bumpSeq);
+        saveArch();
+        sync.ok = true; sync.auth = false; sync.msg = ""; sync.at = new Date();
+      } catch (err) { syncFailed(err); }
+      finally { sync.busy = null; renderArch(); updateNumHint(); renderSync(); }
+    })();
+    return sync.busy;
+  }
+  async function pushOne(num) {
+    if (!sync.on || !getPw()) return;
+    var e = ARCH.offers[num]; if (!e) return;
+    try {
+      var res = await api("PUT", "/offers/" + encodeURIComponent(num), forServer(e));
+      e.synced = true; e.pending = false; if (res.offer && res.offer.status) e.status = res.offer.status;
+      sync.ok = true; sync.auth = false; sync.msg = ""; sync.at = new Date();
+    } catch (err) { e.pending = true; syncFailed(err); }
+    saveArch(); renderSync(); renderArch();
+  }
+  function renderSync() {
+    var line = $("syncLine"), form = $("pwForm");
+    if (!line) return;
+    if (!sync.on) { line.hidden = true; form.hidden = true; return; }
+    var needPw = !getPw();
+    form.hidden = !needPw;
+    line.hidden = false;
+    line.className = "sync" + (sync.ok ? " ok" : (sync.msg && !/Synchronisiere/.test(sync.msg) ? " err" : ""));
+    var pending = Object.keys(ARCH.offers).filter(function (k) { return ARCH.offers[k].pending; }).length;
+    var txt = needPw ? (sync.msg || "Mit Teampasswort verbinden, um das gemeinsame Archiv in Notion zu sehen.")
+      : sync.msg ? sync.msg
+      : sync.ok ? "Gemeinsames Archiv in Notion · aktualisiert " + sync.at.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) + (pending ? " · " + pending + " noch nicht übertragen" : "")
+      : "";
+    $("syncText").textContent = txt;
+  }
   function summaryOf(st) {
     var T = computeTotals(st), c = st.client || {}, o = st.offer || {};
     return { number: o.number || "", date: o.date || "", validUntil: o.validUntil || "", company: c.company || "", person: c.person || "",
@@ -590,9 +687,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
       createdAt: prev ? prev.createdAt : (opts && opts.createdAt) || now,
       updatedAt: (opts && opts.updatedAt) || now,
       exports: (prev ? prev.exports || 0 : 0) + (opts && opts.noCount ? 0 : 1),
-      state: clone(st)
+      state: clone(st),
+      status: prev ? prev.status : "offen",
+      pending: true
     });
     bumpSeq(num); saveArch();
+    pushOne(num);
   }
 
   var EXAMPLE_ITEMS = [
@@ -774,11 +874,14 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
     renderItems(); changed();
     var n = S.items.length - 1; var f = $("it" + n + "_title"); if (f) f.focus();
   });
-  $("newOffer").addEventListener("click", function () {
+  $("newOffer").addEventListener("click", async function () {
     if (S.offer && S.offer.number && !ARCH.offers[S.offer.number.trim()] && draftHasContent()) {
       if (!arm(this, "Entwurf verwerfen?")) return;
     }
-    bumpSeq(S.offer && S.offer.number);
+    if (sync.on && getPw()) {
+      var btn = this; btn.disabled = true;
+      try { await Promise.race([syncNow(), new Promise(function (r) { setTimeout(r, 6000); })]); } finally { btn.disabled = false; }
+    }
     var next = nextNumber();
     var keep = S.sender, prevStaff = S.staff || {}, ds = defaultStaff();
     var d = defaults();
@@ -930,17 +1033,31 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
       });
       bDel.addEventListener("click", function () {
         if (!arm(bDel, "Wirklich löschen?")) return;
-        delete ARCH.offers[k]; saveArch(); renderArch(); updateNumHint(); setStatus("Angebot " + k + " aus dem Archiv gelöscht.");
+        (async function () {
+          if (sync.on && e.synced) {
+            if (!getPw()) { setStatus("Zum Löschen erst mit dem Teampasswort verbinden.", true); return; }
+            try { await api("DELETE", "/offers/" + encodeURIComponent(k)); }
+            catch (err) { syncFailed(err); renderSync(); setStatus("Löschen nicht möglich: Notion nicht erreichbar.", true); return; }
+          }
+          delete ARCH.offers[k]; saveArch(); renderArch(); updateNumHint();
+          setStatus("Angebot " + k + " gelöscht" + (sync.on && e.synced ? " (liegt im Notion-Papierkorb)." : "."));
+        })();
       });
       list.appendChild(el("div", { class: "arch-row" + (k === cur ? " current" : "") }, [
-        el("div", { class: "meta" }, [el("div", {}, [el("span", { class: "no", text: k }), document.createTextNode("  "), el("span", { class: "who", text: who })]), el("div", { class: "sub", text: sub })]),
+        el("div", { class: "meta" }, [el("div", {}, [el("span", { class: "no", text: k }), document.createTextNode("  "), el("span", { class: "who", text: who }), e.status && e.status !== "offen" ? el("span", { class: "badge " + e.status, text: e.status }) : document.createTextNode(""), e.pending && sync.on ? el("span", { class: "badge", text: "nicht übertragen" }) : document.createTextNode("")]), el("div", { class: "sub", text: sub })]),
         el("div", { class: "acts" }, [bEdit, bPdf, bDel])
       ]));
     });
   }
   $("archBtn").addEventListener("click", function () {
-    var p = $("arch"), open = p.hidden; p.hidden = !open; this.setAttribute("aria-expanded", String(open)); if (open) renderArch();
+    var p = $("arch"), open = p.hidden; p.hidden = !open; this.setAttribute("aria-expanded", String(open)); if (open) { renderArch(); renderSync(); syncNow(); }
   });
+  function savePw() {
+    var v = $("teamPw").value.trim(); if (!v) return;
+    setPw(v); $("teamPw").value = ""; sync.auth = false; sync.msg = ""; renderSync(); syncNow();
+  }
+  $("pwSave").addEventListener("click", savePw);
+  $("teamPw").addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); savePw(); } });
   $("archExport").addEventListener("click", async function () {
     if (!downloads) return;
     try {
@@ -977,6 +1094,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
   });
 
   fillForm(); renderTotals(); renderArch(); updateNumHint(); updateGreetHint(); setStatus("Erstelle Vorschau …"); rebuild();
+  renderSync(); syncNow();
+  if (sync.on && !getPw()) { $("arch").hidden = false; $("archBtn").setAttribute("aria-expanded", "true"); }
   var ro; try { var lastW = 0; ro = new ResizeObserver(function (en) { var w = Math.round(en[0].contentRect.width); if (Math.abs(w - lastW) > 40) { lastW = w; if (lastBytes) renderPreview(lastBytes, building); } }); ro.observe($("sheets")); } catch (e) {}
 
   if (window.claude && window.claude.use) {
