@@ -594,7 +594,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { isStaffI
   function clone(x) { return JSON.parse(JSON.stringify(x)); }
 
   // ---- shared archive in Notion (via the 11event Cloudflare Worker)
-  var SYNC_URL = "";
+  var SYNC_URL = "https://11event-angebote.alextomruff.workers.dev";
   var PW_KEY = "11event-team-pw";
   var sync = { on: !!SYNC_URL && !(window.claude && window.claude.use), ok: false, auth: false, msg: "", at: null, busy: null };
   function getPw() { try { return localStorage.getItem(PW_KEY) || ""; } catch (e) { return ""; } }
