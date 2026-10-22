@@ -706,7 +706,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { stateToD
         var server = {};
         (data.offers || []).forEach(function (o) { if (o.number) server[o.number] = entryFromServer(o); });
         // offers whose line items are missing in Notion but whose PDF is stored: rebuild from the data inside the PDF
-        var broken = Object.keys(server).filter(function (k) { var e = server[k]; return !e.pending && e.hasPdf && e.storedNetCents > 0 && e.netCents === 0; }).slice(0, 10);
+        var broken = Object.keys(server).filter(function (k) { var e = server[k]; return e.hasPdf && e.netCents === 0; }).slice(0, 10);
         for (var b = 0; b < broken.length; b++) {
           try {
             var rp = await fetch(SYNC_URL.replace(/\/$/, "") + "/offers/" + encodeURIComponent(broken[b]) + "/pdf", { cache: "no-store", headers: { "X-Team-Password": getPw() } });
@@ -725,7 +725,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = { stateToD
           if (srv && srv.pending) src = srv;                                   // old "Daten" format in Notion: convert to columns
           else if (loc && loc.state && (loc.pending || (!srv && !loc.synced))) src = loc;  // local change not yet in Notion
           if (!src) continue;
-          var res = await api("PUT", "/offers/" + encodeURIComponent(k), forServer(src));
+          var outDoc = forServer(src);
+          if (!outDoc.positions.length) { if (srv) { srv.pending = false; } continue; } // never overwrite Notion with an offer that has no line items
+          var res = await api("PUT", "/offers/" + encodeURIComponent(k), outDoc);
           server[k] = Object.assign({}, src, { synced: true, pending: false, status: (res.offer && res.offer.status) || (srv && srv.status) || "offen", hasPdf: srv ? srv.hasPdf : src.hasPdf });
         }
         ARCH.offers = server;
@@ -771,8 +773,10 @@ if (typeof module !== "undefined" && module.exports) module.exports = { stateToD
   async function pushOne(num) {
     if (!sync.on || !getPw()) return;
     var e = ARCH.offers[num]; if (!e) return;
+    var outDoc = forServer(e);
+    if (!outDoc.positions.length) { e.pending = false; saveArch(); return false; }
     try {
-      var res = await api("PUT", "/offers/" + encodeURIComponent(num), forServer(e));
+      var res = await api("PUT", "/offers/" + encodeURIComponent(num), outDoc);
       e.synced = true; e.pending = false; if (res.offer && res.offer.status) e.status = res.offer.status;
       sync.ok = true; sync.auth = false; sync.msg = ""; sync.at = new Date();
       saveArch(); renderSync(); renderArch();
