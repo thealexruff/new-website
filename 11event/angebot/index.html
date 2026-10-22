@@ -1167,7 +1167,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = { stateToD
           var bytes = await buildOfferPdf(window.PDFLib, window.fontkit, FB, e.state);
           var cleanN = String(k).replace(/[^\w\-]+/g, "_");
           await downloads.save({ filename: "Angebot_" + cleanN + ".pdf", data: new Blob([bytes], { type: "application/pdf" }) });
-          setStatus("PDF " + k + " erneut heruntergeladen.");
+          var hasLines = computeTotals(normalize(clone(e.state))).lines.length > 0;
+          if (sync.on && e.synced && hasLines && await uploadPdf(k, bytes, pdfName(e.state))) setStatus("PDF " + k + " heruntergeladen und in Notion erneuert.");
+          else setStatus("PDF " + k + " erneut heruntergeladen.");
         } catch (err) { if (!(err && err.code === "declined")) setStatus("PDF konnte nicht erstellt werden.", true); }
       });
       bDel.addEventListener("click", function () {
