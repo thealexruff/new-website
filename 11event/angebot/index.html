@@ -685,6 +685,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { stateToD
     var e = Object.assign({}, o, { state: st, synced: true });
     delete e.positions; delete e.legacyState;
     if (o.legacyState) e.pending = true; // old format: convert to columns on the next push
+    e.storedNetCents = o.netCents || 0;
     var T = computeTotals(normalize(clone(st)));
     e.grossCents = T.gross; e.netCents = T.net; e.vatCents = T.vat;
     return e;
@@ -704,6 +705,20 @@ if (typeof module !== "undefined" && module.exports) module.exports = { stateToD
         var data = await api("GET", "/offers");
         var server = {};
         (data.offers || []).forEach(function (o) { if (o.number) server[o.number] = entryFromServer(o); });
+        // offers whose line items are missing in Notion but whose PDF is stored: rebuild from the data inside the PDF
+        var broken = Object.keys(server).filter(function (k) { var e = server[k]; return !e.pending && e.hasPdf && e.storedNetCents > 0 && e.netCents === 0; }).slice(0, 10);
+        for (var b = 0; b < broken.length; b++) {
+          try {
+            var rp = await fetch(SYNC_URL.replace(/\/$/, "") + "/offers/" + encodeURIComponent(broken[b]) + "/pdf", { cache: "no-store", headers: { "X-Team-Password": getPw() } });
+            if (!rp.ok || !window.PDFLib) continue;
+            var dd = await readOfferData(window.PDFLib, new Uint8Array(await rp.arrayBuffer()));
+            if (!dd || !dd.state) continue;
+            var fixed = Object.assign({}, server[broken[b]], { state: dd.state, pending: true });
+            var FT = computeTotals(normalize(clone(dd.state)));
+            fixed.netCents = FT.net; fixed.vatCents = FT.vat; fixed.grossCents = FT.gross;
+            server[broken[b]] = fixed;
+          } catch (err) {}
+        }
         var keys = Object.keys(ARCH.offers).concat(Object.keys(server).filter(function (k) { return !ARCH.offers[k]; }));
         for (var i = 0; i < keys.length; i++) {
           var k = keys[i], loc = ARCH.offers[k], srv = server[k], src = null;
